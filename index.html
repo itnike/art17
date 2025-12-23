@@ -3,170 +3,330 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Арт 17 — Pandaplay</title>
-    
-    <!-- Подключаем шрифты и иконки -->
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <meta name="description" content="Профессиональный дизайн интерьеров от студии 'Арт 17'. Создаем уникальные пространства для игр на открытом воздухе">
+    <title>Арт 17 | Pandaplay - Дизайн интерьеров и игровые площадки</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@700;800&display=swap" rel="stylesheet">
 </head>
 <body>
     <!-- Header -->
-    <header>
+    <header class="main-header">
         <div class="container nav-container">
-            <a href="#home" class="logo">АРТ<span>17</span></a>
-            
-            <button class="mobile-menu-btn" aria-label="Открыть меню">
-                <i class="fas fa-bars"></i>
-            </button>
-            
-            <nav class="nav-links">
-                <ul>
-                    <li><a href="#home">Главная</a></li>
-                    <li><a href="#about">О нас</a></li>
-                    <li><a href="#services">Услуги</a></li>
-                    <li><a href="#products">Товары</a></li>
-                    <li><a href="#portfolio">Работы</a></li>
-                    <li><a href="#contact">Контакты</a></li>
+            <a href="#home" class="logo" aria-label="Арт 17 - На главную">
+                <span class="logo-text">АРТ<span class="logo-accent">17</span></span>
+            </a>
+
+            <nav class="main-nav">
+                <button class="mobile-menu-btn" aria-label="Открыть меню" aria-expanded="false">
+                    <span class="menu-icon"></span>
+                    <span class="menu-icon"></span>
+                    <span class="menu-icon"></span>
+                </button>
+
+                <ul class="nav-links">
+                    <li><a href="#home" class="nav-link">Главная</a></li>
+                    <li><a href="#about" class="nav-link">О нас</a></li>
+                    <li><a href="#services" class="nav-link">Услуги</a></li>
+                    <li><a href="#products" class="nav-link">Товары</a></li>
+                    <li><a href="#portfolio" class="nav-link">Работы</a></li>
+                    <li><a href="#contact" class="nav-link">Контакты</a></li>
                 </ul>
             </nav>
         </div>
     </header>
 
-    <!-- Hero Section -->
-    <section id="home" class="hero">
-        <div class="container">
-            <h1>PANDAPLAY</h1>
-            <p>Профессиональный дизайн интерьеров от студии «Арт 17». Создаём уникальные пространства.</p>
-            <button class="cta-button" onclick="scrollToContact()">Бесплатная консультация</button>
-        </div>
-    </section>
+    <main>
+        <!-- Hero Section -->
+        <section id="home" class="hero-section" aria-labelledby="hero-title">
+            <div class="hero-overlay"></div>
+            <div class="container hero-content">
+                <h1 id="hero-title" class="hero-title">PANDAPLAY</h1>
+                <p class="hero-subtitle">Профессиональный дизайн интерьеров от студии "Арт 17". Создаем уникальные пространства для ярких приключений.</p>
+                <button class="cta-button primary-btn" onclick="scrollToContact()" aria-label="Получить бесплатную консультацию">
+                    <span>Бесплатная консультация</span>
+                    <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                </button>
+            </div>
+        </section>
 
-    <!-- About Section -->
-    <section id="about" class="section-white">
-        <div class="container">
-            <div class="section-title">
-                <h2>О нас</h2>
-                <p>Мы создаём пространства, в которых хочется жить и работать</p>
-            </div>
-            <div class="about-content">
-                <p>Студия «Арт 17» работает на рынке дизайна интерьеров более 10 лет. Мы реализуем проекты любой сложности — от частных квартир до коммерческих помещений.</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- Services Section -->
-    <section id="services" class="section-gray">
-        <div class="container">
-            <div class="section-title">
-                <h2>Наши услуги</h2>
-                <p>Полный спектр услуг по дизайну и ремонту</p>
-            </div>
-            <div id="services-container" class="services-grid"></div>
-        </div>
-    </section>
-
-    <!-- Products Section -->
-    <section id="products" class="section-white">
-        <div class="container">
-            <div class="section-title">
-                <h2>Наши товары</h2>
-                <p>Качественное оборудование и мебель для ваших проектов</p>
-            </div>
-            <div id="products-container" class="products-grid"></div>
-        </div>
-    </section>
-
-    <!-- Portfolio Section -->
-    <section id="portfolio" class="section-gray">
-        <div class="container">
-            <div class="section-title">
-                <h2>Наши работы</h2>
-                <p>Реализованные проекты, которые говорят сами за себя</p>
-            </div>
-            <div id="portfolio-container" class="portfolio-grid"></div>
-        </div>
-    </section>
-
-    <!-- Contact Section -->
-    <section id="contact" class="section-light">
-        <div class="container">
-            <div class="section-title">
-                <h2>Свяжитесь с нами</h2>
-                <p>Оставьте заявку, и мы подготовим индивидуальное предложение</p>
-            </div>
-            <form id="contactForm" class="contact-form">
-                <div class="form-group">
-                    <input type="text" id="name" placeholder="Ваше имя" required>
+        <!-- About Section -->
+        <section id="about" class="section about-section">
+            <div class="container">
+                <div class="section-header">
+                    <span class="section-label">О компании</span>
+                    <h2 class="section-title">Студия дизайна "Арт 17"</h2>
+                    <p class="section-description">Более 10 лет создаем уникальные игровые пространства, которые вдохновляют детей и радуют родителей</p>
                 </div>
-                <div class="form-group">
-                    <input type="tel" id="phone" placeholder="Телефон" required>
-                </div>
-                <div class="form-group">
-                    <input type="email" id="email" placeholder="E‑mail" required>
-                </div>
-                <div class="form-group">
-                    <select id="interest">
-                        <option value="">Что вас интересует?</option>
-                        <option value="service">Услуга</option>
-                        <option value="product">Товар</option>
-                        <option value="consultation">Консультация</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <textarea id="message" placeholder="Опишите ваш проект" rows="5" required></textarea>
-                </div>
-                <button type="submit" class="cta-button">Отправить заявку</button>
-            </form>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <footer>
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-column">
-                    <div class="footer-logo">АРТ<span>17</span></div>
-                    <p>Превращаем игры на открытом воздухе в яркие и необычные приключения.</p>
-                    <div class="social-links">
-                        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-                        <a href="#" aria-label="ВКонтакте"><i class="fab fa-vk"></i></a>
-                        <a href="#" aria-label="Telegram"><i class="fab fa-telegram"></i></a>
-                        <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                
+                <div class="about-grid">
+                    <div class="about-card">
+                        <div class="about-icon">
+                            <i class="fas fa-medal"></i>
+                        </div>
+                        <h3>Опыт работы</h3>
+                        <p>Более 10 лет успешной реализации проектов различной сложности</p>
+                    </div>
+                    <div class="about-card">
+                        <div class="about-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <h3>Команда экспертов</h3>
+                        <p>Профессиональные дизайнеры, архитекторы и монтажники</p>
+                    </div>
+                    <div class="about-card">
+                        <div class="about-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <h3>Гарантия качества</h3>
+                        <p>Используем только сертифицированные материалы и оборудование</p>
+                    </div>
+                    <div class="about-card">
+                        <div class="about-icon">
+                            <i class="fas fa-award"></i>
+                        </div>
+                        <h3>Премиум решения</h3>
+                        <p>Индивидуальный подход к каждому проекту и клиенту</p>
                     </div>
                 </div>
-                
-                <div class="footer-column">
-                    <h3>Контакты</h3>
-                    <p><i class="fas fa-map-marker-alt"></i> Калуга, Аэропортовский переулок, 11</p>
-                    <p><i class="fas fa-phone"></i> 8 (499) 688-63-54</p>
-                    <p><i class="fas fa-envelope"></i> sales@pandaplay.ru</p>
+            </div>
+        </section>
+
+        <!-- Services Section -->
+        <section id="services" class="section services-section">
+            <div class="container">
+                <div class="section-header">
+                    <span class="section-label">Наши предложения</span>
+                    <h2 class="section-title">Профессиональные услуги</h2>
+                    <p class="section-description">Полный спектр услуг по созданию и обустройству игровых пространств</p>
                 </div>
-                
-                <div class="footer-column">
-                    <h3>Часы работы</h3>
-                    <p>Пн–Пт: 8:00–17:00</p>
-                    <p>Сб: 8:00–16:00</p>
-                    <p>Вс: выходной</p>
-                </div>
-                
-                <div class="footer-column">
-                    <h3>Быстрые ссылки</h3>
-                    <ul>
-                        <li><a href="#services">Услуги</a></li>
-                        <li><a href="#products">Товары</a></li>
-                        <li><a href="#portfolio">Наши работы</a></li>
-                        <li><a href="#contact">Консультация</a></li>
-                    </ul>
+
+                <div id="services-container" class="services-grid" role="list" aria-label="Список услуг">
+                    <!-- Услуги загружаются динамически -->
+                    <div class="loading-spinner" id="services-loading">
+                        <div class="spinner"></div>
+                        <p>Загрузка услуг...</p>
+                    </div>
                 </div>
             </div>
-            
+        </section>
+
+        <!-- Products Section -->
+        <section id="products" class="section products-section">
+            <div class="container">
+                <div class="section-header">
+                    <span class="section-label">Каталог</span>
+                    <h2 class="section-title">Популярные товары</h2>
+                    <p class="section-description">Качественное оборудование и мебель для игровых площадок</p>
+                </div>
+
+                <div id="products-container" class="products-grid" role="list" aria-label="Список товаров">
+                    <!-- Товары загружаются динамически -->
+                    <div class="loading-spinner" id="products-loading">
+                        <div class="spinner"></div>
+                        <p>Загрузка товаров...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Portfolio Section -->
+        <section id="portfolio" class="section portfolio-section">
+            <div class="container">
+                <div class="section-header">
+                    <span class="section-label">Наше портфолио</span>
+                    <h2 class="section-title">Реализованные проекты</h2>
+                    <p class="section-description">Посмотрите на работы, которые говорят сами за себя</p>
+                </div>
+
+                <div id="portfolio-container" class="portfolio-grid" role="list" aria-label="Галерея работ">
+                    <!-- Портфолио загружается динамически -->
+                    <div class="loading-spinner" id="portfolio-loading">
+                        <div class="spinner"></div>
+                        <p>Загрузка портфолио...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact" class="section contact-section">
+            <div class="container">
+                <div class="section-header">
+                    <span class="section-label">Свяжитесь с нами</span>
+                    <h2 class="section-title">Готовы начать проект?</h2>
+                    <p class="section-description">Оставьте заявку и мы подготовим индивидуальное предложение</p>
+                </div>
+
+                <div class="contact-wrapper">
+                    <div class="contact-form">
+                        <form id="contactForm" novalidate>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="name" class="form-label">Ваше имя *</label>
+                                    <input type="text" id="name" class="form-input" placeholder="Иван Иванов" required>
+                                    <div class="form-error" id="name-error"></div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="phone" class="form-label">Телефон *</label>
+                                    <input type="tel" id="phone" class="form-input" placeholder="+7 (999) 123-45-67" required>
+                                    <div class="form-error" id="phone-error"></div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="email" class="form-label">E-mail *</label>
+                                    <input type="email" id="email" class="form-input" placeholder="ivan@example.com" required>
+                                    <div class="form-error" id="email-error"></div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="interest" class="form-label">Что вас интересует?</label>
+                                    <select id="interest" class="form-select">
+                                        <option value="">Выберите категорию</option>
+                                        <option value="design">Дизайн-проект</option>
+                                        <option value="equipment">Оборудование</option>
+                                        <option value="installation">Монтаж</option>
+                                        <option value="consultation">Консультация</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group full-width">
+                                    <label for="message" class="form-label">Опишите ваш проект</label>
+                                    <textarea id="message" class="form-textarea" placeholder="Расскажите о ваших идеях, площади, бюджете и других деталях..." rows="5"></textarea>
+                                </div>
+                            </div>
+
+                            <div class="form-footer">
+                                <button type="submit" class="cta-button primary-btn submit-btn" aria-label="Отправить заявку">
+                                    <span>Отправить заявку</span>
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                                <p class="form-note">Нажимая кнопку, вы соглашаетесь с политикой конфиденциальности</p>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="contact-info">
+                        <div class="info-card">
+                            <div class="info-icon">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                            <div>
+                                <h3>Адрес офиса</h3>
+                                <p>г. Калуга, Аэропортовский переулок 11</p>
+                            </div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-icon">
+                                <i class="fas fa-phone"></i>
+                            </div>
+                            <div>
+                                <h3>Телефон</h3>
+                                <p>8 (499) 688-63-54</p>
+                            </div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-icon">
+                                <i class="fas fa-envelope"></i>
+                            </div>
+                            <div>
+                                <h3>Email</h3>
+                                <p>sales@pandaplay.ru</p>
+                            </div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div>
+                                <h3>Часы работы</h3>
+                                <p>Пн-Пт: 8:00 - 17:00</p>
+                                <p>Сб: 8:00 - 16:00</p>
+                                <p>Вс: выходной</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-col">
+                    <div class="footer-logo">АРТ<span>17</span></div>
+                    <p class="footer-description">Превращаем игры на открытом воздухе в яркие и необычные приключения. Создаем безопасные и креативные пространства для детей.</p>
+                    <div class="social-links">
+                        <a href="#" class="social-link" aria-label="Instagram" title="Наш Instagram">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#" class="social-link" aria-label="ВКонтакте" title="Наша группа ВКонтакте">
+                            <i class="fab fa-vk"></i>
+                        </a>
+                        <a href="#" class="social-link" aria-label="Telegram" title="Наш Telegram канал">
+                            <i class="fab fa-telegram"></i>
+                        </a>
+                        <a href="#" class="social-link" aria-label="WhatsApp" title="Написать в WhatsApp">
+                            <i class="fab fa-whatsapp"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="footer-col">
+                    <h3 class="footer-title">Навигация</h3>
+                    <ul class="footer-links">
+                        <li><a href="#home" class="footer-link">Главная</a></li>
+                        <li><a href="#about" class="footer-link">О нас</a></li>
+                        <li><a href="#services" class="footer-link">Услуги</a></li>
+                        <li><a href="#products" class="footer-link">Товары</a></li>
+                        <li><a href="#portfolio" class="footer-link">Портфолио</a></li>
+                        <li><a href="#contact" class="footer-link">Контакты</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-col">
+                    <h3 class="footer-title">Услуги</h3>
+                    <ul class="footer-links">
+                        <li><a href="#" class="footer-link">Дизайн игровых площадок</a></li>
+                        <li><a href="#" class="footer-link">Монтаж оборудования</a></li>
+                        <li><a href="#" class="footer-link">Техническое обслуживание</a></li>
+                        <li><a href="#" class="footer-link">Ландшафтный дизайн</a></li>
+                        <li><a href="#" class="footer-link">Консультации</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-col">
+                    <h3 class="footer-title">Контакты</h3>
+                    <div class="contact-info-footer">
+                        <p><i class="fas fa-map-marker-alt"></i> Калуга, Аэропортовский переулок 11</p>
+                        <p><i class="fas fa-phone"></i> 8 (499) 688-63-54</p>
+                        <p><i class="fas fa-envelope"></i> sales@pandaplay.ru</p>
+                        <p><i class="fas fa-clock"></i> Пн-Пт: 8:00 - 17:00</p>
+                    </div>
+                </div>
+            </div>
+
             <div class="footer-bottom">
-                <p>&copy; 2026 «Арт 17». Все права защищены.</p>
+                <p>&copy; 2024 <strong>"Арт 17"</strong>. Все права защищены.</p>
+                <div class="footer-legal">
+                    <a href="#" class="legal-link">Политика конфиденциальности</a>
+                    <a href="#" class="legal-link">Пользовательское соглашение</a>
+                </div>
             </div>
         </div>
     </footer>
 
-    <script src="script.js"></script>
+    <!-- Кнопка "Наверх" -->
+    <button class="scroll-top-btn" aria-label="Вернуться наверх" title="Наверх">
+        <i class="fas fa-chevron-up"></i>
+    </button>
+
+    <!-- Подключение JavaScript -->
+    <script src="script.js" defer></script>
 </body>
 </html>
