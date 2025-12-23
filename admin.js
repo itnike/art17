@@ -23,37 +23,21 @@ class AdminState {
         this.applications = JSON.parse(localStorage.getItem(ADMIN_CONFIG.APPLICATIONS_KEY)) || [];
         this.currentSection = 'dashboard';
         this.selectedImage = null;
+        console.log('AdminState инициализирован:', this.data);
     }
 
     loadData() {
         try {
-            // Пытаемся загрузить из localStorage
             const stored = localStorage.getItem(ADMIN_CONFIG.STORAGE_KEY);
             if (stored) {
+                console.log('Данные загружены из localStorage');
                 return JSON.parse(stored);
             }
-
-            // Если нет в localStorage, загружаем из файла
-            return this.loadDefaultData();
+            console.log('Локальных данных нет, загружаем дефолтные');
+            return { services: [], products: [] };
         } catch (error) {
             console.error('Ошибка загрузки данных:', error);
-            return this.loadDefaultData();
-        }
-    }
-
-    async loadDefaultData() {
-        try {
-            const response = await fetch('data/products.json');
-            if (response.ok) {
-                return await response.json();
-            }
-            throw new Error('Файл не найден');
-        } catch (error) {
-            // Возвращаем дефолтные данные
-            return {
-                services: [],
-                products: []
-            };
+            return { services: [], products: [] };
         }
     }
 
@@ -99,9 +83,11 @@ class AdminState {
     saveData() {
         try {
             localStorage.setItem(ADMIN_CONFIG.STORAGE_KEY, JSON.stringify(this.data));
+            console.log('Данные сохранены:', this.data);
             return true;
         } catch (error) {
             console.error('Ошибка сохранения данных:', error);
+            this.showNotification('Ошибка сохранения данных', 'error');
             return false;
         }
     }
@@ -127,113 +113,165 @@ class AdminState {
     }
 
     addService(service) {
-        const newService = {
-            ...service,
-            id: Date.now(),
-            features: service.features ? service.features.split('\n').filter(f => f.trim()) : []
-        };
-        this.data.services.push(newService);
-        this.saveData();
-        this.logActivity(`Добавлена услуга: ${service.name}`);
-        return newService;
+        try {
+            const newService = {
+                ...service,
+                id: Date.now(),
+                features: service.features ? service.features.split('\n').filter(f => f.trim()) : []
+            };
+            this.data.services.push(newService);
+            this.saveData();
+            this.logActivity(`Добавлена услуга: ${service.name}`);
+            console.log('Услуга добавлена:', newService);
+            return newService;
+        } catch (error) {
+            console.error('Ошибка добавления услуги:', error);
+            this.showNotification('Ошибка добавления услуги', 'error');
+            return null;
+        }
     }
 
     updateService(id, updates) {
-        const index = this.data.services.findIndex(s => s.id === id);
-        if (index !== -1) {
-            this.data.services[index] = {
-                ...this.data.services[index],
-                ...updates,
-                features: updates.features ? updates.features.split('\n').filter(f => f.trim()) : this.data.services[index].features
-            };
-            this.saveData();
-            this.logActivity(`Обновлена услуга: ${updates.name}`);
-            return true;
+        try {
+            const index = this.data.services.findIndex(s => s.id === parseInt(id));
+            if (index !== -1) {
+                this.data.services[index] = {
+                    ...this.data.services[index],
+                    ...updates,
+                    features: updates.features ? updates.features.split('\n').filter(f => f.trim()) : this.data.services[index].features
+                };
+                this.saveData();
+                this.logActivity(`Обновлена услуга: ${updates.name}`);
+                console.log('Услуга обновлена:', this.data.services[index]);
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error('Ошибка обновления услуги:', error);
+            this.showNotification('Ошибка обновления услуги', 'error');
+            return false;
         }
-        return false;
     }
 
     deleteService(id) {
-        const index = this.data.services.findIndex(s => s.id === id);
-        if (index !== -1) {
-            const service = this.data.services[index];
-            this.data.services.splice(index, 1);
-            this.saveData();
-            this.logActivity(`Удалена услуга: ${service.name}`);
-            return true;
+        try {
+            const index = this.data.services.findIndex(s => s.id === id);
+            if (index !== -1) {
+                const service = this.data.services[index];
+                this.data.services.splice(index, 1);
+                this.saveData();
+                this.logActivity(`Удалена услуга: ${service.name}`);
+                console.log('Услуга удалена:', service);
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error('Ошибка удаления услуги:', error);
+            this.showNotification('Ошибка удаления услуги', 'error');
+            return false;
         }
-        return false;
     }
 
     addProduct(product) {
-        const newProduct = {
-            ...product,
-            id: Date.now(),
-            specs: {
-                material: product.material || '',
-                age: product.age || '',
-                warranty: product.warranty || '',
-                size: product.size || ''
-            }
-        };
-        this.data.products.push(newProduct);
-        this.saveData();
-        this.logActivity(`Добавлен товар: ${product.name}`);
-        return newProduct;
+        try {
+            const newProduct = {
+                ...product,
+                id: Date.now(),
+                specs: {
+                    material: product.material || '',
+                    age: product.age || '',
+                    warranty: product.warranty || '',
+                    size: product.size || ''
+                }
+            };
+            this.data.products.push(newProduct);
+            this.saveData();
+            this.logActivity(`Добавлен товар: ${product.name}`);
+            console.log('Товар добавлен:', newProduct);
+            return newProduct;
+        } catch (error) {
+            console.error('Ошибка добавления товара:', error);
+            this.showNotification('Ошибка добавления товара', 'error');
+            return null;
+        }
     }
 
     updateProduct(id, updates) {
-        const index = this.data.products.findIndex(p => p.id === id);
-        if (index !== -1) {
-            this.data.products[index] = {
-                ...this.data.products[index],
-                ...updates,
-                specs: {
-                    material: updates.material || this.data.products[index].specs.material,
-                    age: updates.age || this.data.products[index].specs.age,
-                    warranty: updates.warranty || this.data.products[index].specs.warranty,
-                    size: updates.size || this.data.products[index].specs.size
-                }
-            };
-            this.saveData();
-            this.logActivity(`Обновлен товар: ${updates.name}`);
-            return true;
+        try {
+            const index = this.data.products.findIndex(p => p.id === parseInt(id));
+            if (index !== -1) {
+                this.data.products[index] = {
+                    ...this.data.products[index],
+                    ...updates,
+                    specs: {
+                        material: updates.material || this.data.products[index].specs.material,
+                        age: updates.age || this.data.products[index].specs.age,
+                        warranty: updates.warranty || this.data.products[index].specs.warranty,
+                        size: updates.size || this.data.products[index].specs.size
+                    }
+                };
+                this.saveData();
+                this.logActivity(`Обновлен товар: ${updates.name}`);
+                console.log('Товар обновлен:', this.data.products[index]);
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error('Ошибка обновления товара:', error);
+            this.showNotification('Ошибка обновления товара', 'error');
+            return false;
         }
-        return false;
     }
 
     deleteProduct(id) {
-        const index = this.data.products.findIndex(p => p.id === id);
-        if (index !== -1) {
-            const product = this.data.products[index];
-            this.data.products.splice(index, 1);
-            this.saveData();
-            this.logActivity(`Удален товар: ${product.name}`);
-            return true;
+        try {
+            const index = this.data.products.findIndex(p => p.id === id);
+            if (index !== -1) {
+                const product = this.data.products[index];
+                this.data.products.splice(index, 1);
+                this.saveData();
+                this.logActivity(`Удален товар: ${product.name}`);
+                console.log('Товар удален:', product);
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error('Ошибка удаления товара:', error);
+            this.showNotification('Ошибка удаления товара', 'error');
+            return false;
         }
-        return false;
     }
 
     addImage(url, name) {
-        const newImage = {
-            id: Date.now(),
-            url,
-            name: name || `Изображение ${this.images.length + 1}`,
-            uploadedAt: new Date().toISOString()
-        };
-        this.images.unshift(newImage);
-        this.saveImages();
-        return newImage;
+        try {
+            const newImage = {
+                id: Date.now(),
+                url,
+                name: name || `Изображение ${this.images.length + 1}`,
+                uploadedAt: new Date().toISOString()
+            };
+            this.images.unshift(newImage);
+            this.saveImages();
+            return newImage;
+        } catch (error) {
+            console.error('Ошибка добавления изображения:', error);
+            return null;
+        }
     }
 
     deleteImage(id) {
-        const index = this.images.findIndex(img => img.id === id);
-        if (index !== -1) {
-            this.images.splice(index, 1);
-            this.saveImages();
-            return true;
+        try {
+            const index = this.images.findIndex(img => img.id === id);
+            if (index !== -1) {
+                this.images.splice(index, 1);
+                this.saveImages();
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error('Ошибка удаления изображения:', error);
+            return false;
         }
-        return false;
     }
 
     logActivity(message) {
@@ -244,7 +282,6 @@ class AdminState {
             icon: 'fa-history'
         };
 
-        // Сохраняем последние 10 активностей
         let activities = JSON.parse(localStorage.getItem('art17_activities')) || [];
         activities.unshift(activity);
         activities = activities.slice(0, 10);
@@ -263,6 +300,26 @@ class AdminState {
             applications: this.applications.filter(app => app.status === 'new').length,
             totalApplications: this.applications.length
         };
+    }
+
+    showNotification(message, type = 'success') {
+        const container = document.getElementById('notificationContainer');
+        if (!container) return;
+        
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.innerHTML = `
+            <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
+            <span>${message}</span>
+        `;
+
+        container.appendChild(notification);
+
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            notification.style.transform = 'translateX(100%)';
+            setTimeout(() => notification.remove(), 300);
+        }, 5000);
     }
 }
 
@@ -313,20 +370,19 @@ class UIManager {
     updateDashboard() {
         const stats = this.state.getStats();
 
-        // Обновляем счетчики
         document.getElementById('services-count').textContent = stats.services;
         document.getElementById('products-count').textContent = stats.products;
         document.getElementById('portfolio-count').textContent = stats.portfolio;
         document.getElementById('applications-count').textContent = stats.applications;
         document.getElementById('app-count').textContent = stats.applications;
 
-        // Обновляем активность
         this.updateActivityList();
     }
 
     updateActivityList() {
         const activities = this.state.getActivities();
         const container = document.getElementById('activityList');
+        if (!container) return;
 
         container.innerHTML = activities.map(activity => `
             <div class="activity-item">
@@ -344,6 +400,8 @@ class UIManager {
     // Рендеринг услуг
     renderServices() {
         const container = this.elements.servicesList;
+        if (!container) return;
+        
         const services = this.state.data.services;
 
         if (services.length === 0) {
@@ -388,6 +446,8 @@ class UIManager {
     // Рендеринг товаров
     renderProducts() {
         const container = this.elements.productsList;
+        if (!container) return;
+        
         const products = this.state.data.products;
 
         if (products.length === 0) {
@@ -407,7 +467,9 @@ class UIManager {
         container.innerHTML = products.map(product => `
             <div class="product-item" data-id="${product.id}">
                 <div class="product-image-small">
-                    <img src="${product.image}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/200'">
+                    <img src="${product.image || 'https://via.placeholder.com/200'}" 
+                         alt="${product.name}" 
+                         onerror="this.src='https://via.placeholder.com/200'">
                 </div>
                 <div class="item-content">
                     <h4>${product.name}</h4>
@@ -433,6 +495,8 @@ class UIManager {
     // Рендеринг изображений
     renderImages() {
         const container = this.elements.imageGallery;
+        if (!container) return;
+        
         const images = this.state.images;
 
         if (images.length === 0) {
@@ -468,6 +532,8 @@ class UIManager {
     // Рендеринг заявок
     renderApplications() {
         const container = this.elements.applicationsTable;
+        if (!container) return;
+        
         const applications = this.state.applications;
 
         if (applications.length === 0) {
@@ -523,27 +589,11 @@ class UIManager {
 
     // Показать уведомление
     showNotification(message, type = 'success') {
-        const container = document.getElementById('notificationContainer');
-        const notification = document.createElement('div');
-        notification.className = `notification ${type}`;
-        notification.innerHTML = `
-            <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
-            <span>${message}</span>
-        `;
-
-        container.appendChild(notification);
-
-        // Автоматическое удаление через 5 секунд
-        setTimeout(() => {
-            notification.style.opacity = '0';
-            notification.style.transform = 'translateX(100%)';
-            setTimeout(() => notification.remove(), 300);
-        }, 5000);
+        this.state.showNotification(message, type);
     }
 
     // Переключение секций
     switchSection(sectionId) {
-        // Обновляем навигацию
         this.elements.navLinks.forEach(link => {
             link.classList.remove('active');
             if (link.dataset.section === sectionId) {
@@ -551,7 +601,6 @@ class UIManager {
             }
         });
 
-        // Обновляем контент
         this.elements.contentSections.forEach(section => {
             section.classList.remove('active');
             if (section.id === sectionId) {
@@ -559,7 +608,6 @@ class UIManager {
             }
         });
 
-        // Обновляем заголовок
         const titles = {
             dashboard: 'Дашборд',
             services: 'Управление услугами',
@@ -571,7 +619,6 @@ class UIManager {
         };
         this.elements.pageTitle.textContent = titles[sectionId] || sectionId;
 
-        // Сохраняем текущую секцию
         this.state.currentSection = sectionId;
     }
 
@@ -606,7 +653,6 @@ class UIManager {
             document.getElementById('serviceIcon').value = service.icon || '';
             document.getElementById('serviceFeatures').value = service.features?.join('\n') || '';
             
-            // Показать кнопку удаления
             document.getElementById('deleteServiceBtn').style.display = 'inline-block';
         } else {
             form.reset();
@@ -633,10 +679,7 @@ class UIManager {
             document.getElementById('productWarranty').value = product.specs?.warranty || '';
             document.getElementById('productSize').value = product.specs?.size || '';
             
-            // Обновить превью
             this.updateImagePreview(product.image);
-            
-            // Показать кнопку удаления
             document.getElementById('deleteProductBtn').style.display = 'inline-block';
         } else {
             form.reset();
@@ -649,10 +692,12 @@ class UIManager {
 
     updateImagePreview(url) {
         const preview = document.getElementById('productImagePreview');
-        if (url) {
-            preview.innerHTML = `<img src="${url}" alt="Превью" onerror="this.style.display='none'">`;
-        } else {
-            preview.innerHTML = '';
+        if (preview) {
+            if (url) {
+                preview.innerHTML = `<img src="${url}" alt="Превью" onerror="this.style.display='none'">`;
+            } else {
+                preview.innerHTML = '';
+            }
         }
     }
 }
@@ -677,21 +722,18 @@ class EventManager {
     }
 
     setupNavigation() {
-        // Навигация по секциям
         document.querySelectorAll('.nav-link').forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
                 const section = link.dataset.section;
                 this.ui.switchSection(section);
                 
-                // На мобильных закрываем меню
                 if (window.innerWidth <= 1024) {
                     this.ui.elements.sidebar.classList.remove('active');
                 }
             });
         });
 
-        // Мобильное меню
         if (this.ui.elements.menuToggle) {
             this.ui.elements.menuToggle.addEventListener('click', () => {
                 this.ui.elements.sidebar.classList.toggle('active');
@@ -700,7 +742,6 @@ class EventManager {
     }
 
     setupModals() {
-        // Закрытие модальных окон
         document.querySelectorAll('.modal-close').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const modal = e.target.closest('.modal');
@@ -710,7 +751,6 @@ class EventManager {
             });
         });
 
-        // Закрытие при клике вне окна
         document.querySelectorAll('.modal').forEach(modal => {
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) {
@@ -724,20 +764,28 @@ class EventManager {
         // Сохранение услуги
         document.getElementById('saveServiceBtn')?.addEventListener('click', () => {
             const id = document.getElementById('serviceId').value;
+            const serviceName = document.getElementById('serviceName').value.trim();
+            const serviceDescription = document.getElementById('serviceDescription').value.trim();
+            const servicePrice = document.getElementById('servicePrice').value.trim();
+
+            // Проверка заполнения обязательных полей
+            if (!serviceName || !serviceDescription || !servicePrice) {
+                this.ui.showNotification('Заполните все обязательные поля', 'error');
+                return;
+            }
+
             const serviceData = {
-                name: document.getElementById('serviceName').value,
-                description: document.getElementById('serviceDescription').value,
-                price: document.getElementById('servicePrice').value,
-                icon: document.getElementById('serviceIcon').value,
+                name: serviceName,
+                description: serviceDescription,
+                price: servicePrice,
+                icon: document.getElementById('serviceIcon').value.trim(),
                 features: document.getElementById('serviceFeatures').value
             };
 
             if (id) {
-                // Обновление
-                this.state.updateService(parseInt(id), serviceData);
+                this.state.updateService(id, serviceData);
                 this.ui.showNotification('Услуга обновлена');
             } else {
-                // Добавление
                 this.state.addService(serviceData);
                 this.ui.showNotification('Услуга добавлена');
             }
@@ -762,25 +810,35 @@ class EventManager {
         // Сохранение товара
         document.getElementById('saveProductBtn')?.addEventListener('click', () => {
             const id = document.getElementById('productId').value;
+            const productName = document.getElementById('productName').value.trim();
+            const productDescription = document.getElementById('productDescription').value.trim();
+            const productPrice = document.getElementById('productPrice').value.trim();
+            const productCategory = document.getElementById('productCategory').value.trim();
+            const productImage = document.getElementById('productImage').value.trim();
+
+            // Проверка заполнения обязательных полей
+            if (!productName || !productDescription || !productPrice || !productCategory || !productImage) {
+                this.ui.showNotification('Заполните все обязательные поля', 'error');
+                return;
+            }
+
             const productData = {
-                name: document.getElementById('productName').value,
-                description: document.getElementById('productDescription').value,
-                price: document.getElementById('productPrice').value,
-                category: document.getElementById('productCategory').value,
-                image: document.getElementById('productImage').value,
-                location: document.getElementById('productLocation').value,
-                material: document.getElementById('productMaterial').value,
-                age: document.getElementById('productAge').value,
-                warranty: document.getElementById('productWarranty').value,
-                size: document.getElementById('productSize').value
+                name: productName,
+                description: productDescription,
+                price: productPrice,
+                category: productCategory,
+                image: productImage,
+                location: document.getElementById('productLocation').value.trim(),
+                material: document.getElementById('productMaterial').value.trim(),
+                age: document.getElementById('productAge').value.trim(),
+                warranty: document.getElementById('productWarranty').value.trim(),
+                size: document.getElementById('productSize').value.trim()
             };
 
             if (id) {
-                // Обновление
-                this.state.updateProduct(parseInt(id), productData);
+                this.state.updateProduct(id, productData);
                 this.ui.showNotification('Товар обновлен');
             } else {
-                // Добавление
                 this.state.addProduct(productData);
                 this.ui.showNotification('Товар добавлен');
             }
@@ -820,7 +878,6 @@ class EventManager {
 
         if (!uploadArea || !fileInput || !browseBtn) return;
 
-        // Drag & Drop
         uploadArea.addEventListener('dragover', (e) => {
             e.preventDefault();
             uploadArea.classList.add('dragover');
@@ -836,26 +893,21 @@ class EventManager {
             this.handleFileUpload(e.dataTransfer.files);
         });
 
-        // Клик по области загрузки
         browseBtn.addEventListener('click', () => {
             fileInput.click();
         });
 
-        // Выбор файлов
         fileInput.addEventListener('change', (e) => {
             this.handleFileUpload(e.target.files);
         });
     }
 
     async handleFileUpload(files) {
-        // В GitHub Pages мы не можем сохранять файлы на сервер,
-        // поэтому показываем уведомление о том, что нужно использовать URL
         this.ui.showNotification(
             'Для загрузки изображений используйте ссылки на картинки. Вы можете загрузить изображения на сервисы вроде Imgur, а затем вставить URL.',
             'warning'
         );
 
-        // Альтернатива: использовать base64 кодирование (ограничено размером)
         for (const file of files) {
             if (file.size > 5 * 1024 * 1024) {
                 this.ui.showNotification(`Файл ${file.name} слишком большой (макс. 5MB)`, 'error');
@@ -868,17 +920,13 @@ class EventManager {
             }
 
             try {
-                // Конвертируем в base64 для предварительного просмотра
                 const reader = new FileReader();
                 reader.onload = (e) => {
-                    // Сохраняем как data URL (только для предпросмотра)
                     const imageUrl = e.target.result;
                     const imageName = file.name;
                     
-                    // Добавляем в состояние
                     this.state.addImage(imageUrl, imageName);
                     
-                    // Обновляем UI
                     this.ui.renderImages();
                     this.ui.showNotification(`Изображение "${imageName}" загружено`, 'success');
                 };
@@ -893,9 +941,13 @@ class EventManager {
     setupButtons() {
         // Сохранить все
         document.getElementById('saveAll')?.addEventListener('click', () => {
-            // Обновляем основной файл products.json
-            this.exportDataToFile();
-            this.ui.showNotification('Все данные сохранены');
+            console.log('Сохранение всех данных...');
+            const saved = this.state.saveData();
+            if (saved) {
+                this.ui.showNotification('Все данные сохранены в localStorage');
+            } else {
+                this.ui.showNotification('Ошибка сохранения данных', 'error');
+            }
         });
 
         // Экспорт данных
@@ -942,17 +994,15 @@ class EventManager {
     }
 
     setupApplications() {
-        // Фильтр заявок
         document.getElementById('statusFilter')?.addEventListener('change', (e) => {
-            this.filterApplications(e.target.value);
+            console.log('Фильтрация заявок по статусу:', e.target.value);
         });
 
-        // Очистка заявок
         document.getElementById('clearApplications')?.addEventListener('click', () => {
             if (confirm('Удалить все старые заявки? Новые заявки останутся.')) {
                 const oldApplications = this.state.applications.filter(app => {
                     const age = Date.now() - new Date(app.date).getTime();
-                    return age > 30 * 24 * 60 * 60 * 1000; // Старше 30 дней
+                    return age > 30 * 24 * 60 * 60 * 1000;
                 });
                 
                 this.state.applications = this.state.applications.filter(app => !oldApplications.includes(app));
@@ -966,15 +1016,12 @@ class EventManager {
     }
 
     setupSettings() {
-        // Загрузка настроек в форму
         this.loadSettingsToForm();
 
-        // Сохранение настроек
         document.getElementById('saveSettings')?.addEventListener('click', () => {
             this.saveSettingsFromForm();
         });
 
-        // Сброс настроек
         document.getElementById('resetSettings')?.addEventListener('click', () => {
             if (confirm('Сбросить все настройки к заводским?')) {
                 this.state.settings = this.state.loadSettings();
@@ -986,26 +1033,30 @@ class EventManager {
 
     loadSettingsToForm() {
         const settings = this.state.settings;
-        document.getElementById('companyName').value = settings.companyName || '';
-        document.getElementById('companyPhone').value = settings.companyPhone || '';
-        document.getElementById('companyEmail').value = settings.companyEmail || '';
-        document.getElementById('companyAddress').value = settings.companyAddress || '';
-        document.getElementById('companyHours').value = settings.companyHours || '';
-        document.getElementById('seoDescription').value = settings.seoDescription || '';
-        document.getElementById('seoKeywords').value = settings.seoKeywords || '';
+        if (document.getElementById('companyName')) {
+            document.getElementById('companyName').value = settings.companyName || '';
+            document.getElementById('companyPhone').value = settings.companyPhone            document.getElementById('companyName').value = settings.companyName || '';
+            document.getElementById('companyPhone').value = settings.companyPhone || '';
+            document.getElementById('companyEmail').value = settings.companyEmail || '';
+            document.getElementById('companyAddress').value = settings.companyAddress || '';
+            document.getElementById('companyHours').value = settings.companyHours || '';
+            document.getElementById('seoDescription').value = settings.seoDescription || '';
+            document.getElementById('seoKeywords').value = settings.seoKeywords || '';
+        }
     }
 
     saveSettingsFromForm() {
-        this.state.settings = {
-            companyName: document.getElementById('companyName').value,
-            companyPhone: document.getElementById('companyPhone').value,
-            companyEmail: document.getElementById('companyEmail').value,
-            companyAddress: document.getElementById('companyAddress').value,
-            companyHours: document.getElementById('companyHours').value,
-            seoDescription: document.getElementById('seoDescription').value,
-            seoKeywords: document.getElementById('seoKeywords').value
+        const settings = {
+            companyName: document.getElementById('companyName')?.value.trim() || '',
+            companyPhone: document.getElementById('companyPhone')?.value.trim() || '',
+            companyEmail: document.getElementById('companyEmail')?.value.trim() || '',
+            companyAddress: document.getElementById('companyAddress')?.value.trim() || '',
+            companyHours: document.getElementById('companyHours')?.value.trim() || '',
+            seoDescription: document.getElementById('seoDescription')?.value.trim() || '',
+            seoKeywords: document.getElementById('seoKeywords')?.value.trim() || ''
         };
 
+        this.state.settings = settings;
         if (this.state.saveSettings()) {
             this.ui.showNotification('Настройки сохранены');
         } else {
@@ -1015,109 +1066,356 @@ class EventManager {
 
     setupKeyboardShortcuts() {
         document.addEventListener('keydown', (e) => {
-            // Ctrl + S - Сохранить все
-            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-                e.preventDefault();
-                document.getElementById('saveAll').click();
+            if (e.ctrlKey || e.metaKey) {
+                switch (e.key.toLowerCase()) {
+                    case 's':
+                        e.preventDefault();
+                        document.getElementById('saveAll')?.click();
+                        break;
+                    case 'n':
+                        if (this.state.currentSection === 'services') {
+                            e.preventDefault();
+                            document.getElementById('addServiceBtn')?.click();
+                        } else if (this.state.currentSection === 'products') {
+                            e.preventDefault();
+                            document.getElementById('addProductBtn')?.click();
+                        }
+                        break;
+                    case 'e':
+                        e.preventDefault();
+                        document.getElementById('exportData')?.click();
+                        break;
+                    case 'h':
+                        e.preventDefault();
+                        this.ui.switchSection('dashboard');
+                        break;
+                }
             }
 
-            // Escape - Закрыть модальное окно
             if (e.key === 'Escape') {
-                document.querySelectorAll('.modal.active').forEach(modal => {
-                    this.ui.closeModal(modal.id);
+                const openModal = document.querySelector('.modal.active');
+                if (openModal) {
+                    this.ui.closeModal(openModal.id);
+                }
+            }
+        });
+    }
+
+    // Делегирование событий для динамических элементов
+    setupEventDelegation() {
+        document.addEventListener('click', (e) => {
+            // Редактирование услуги
+            if (e.target.closest('.edit-service')) {
+                const item = e.target.closest('.service-item');
+                if (item) {
+                    const id = parseInt(item.dataset.id);
+                    const service = this.state.data.services.find(s => s.id === id);
+                    if (service) {
+                        this.ui.fillServiceForm(service);
+                        this.ui.openModal('serviceModal');
+                    }
+                }
+            }
+
+            // Удаление услуги
+            if (e.target.closest('.delete-service')) {
+                const item = e.target.closest('.service-item');
+                if (item) {
+                    const id = parseInt(item.dataset.id);
+                    if (confirm('Вы уверены, что хотите удалить эту услугу?')) {
+                        if (this.state.deleteService(id)) {
+                            this.ui.renderServices();
+                            this.ui.updateDashboard();
+                            this.ui.showNotification('Услуга удалена', 'warning');
+                        }
+                    }
+                }
+            }
+
+            // Редактирование товара
+            if (e.target.closest('.edit-product')) {
+                const item = e.target.closest('.product-item');
+                if (item) {
+                    const id = parseInt(item.dataset.id);
+                    const product = this.state.data.products.find(p => p.id === id);
+                    if (product) {
+                        this.ui.fillProductForm(product);
+                        this.ui.openModal('productModal');
+                    }
+                }
+            }
+
+            // Удаление товара
+            if (e.target.closest('.delete-product')) {
+                const item = e.target.closest('.product-item');
+                if (item) {
+                    const id = parseInt(item.dataset.id);
+                    if (confirm('Вы уверены, что хотите удалить этот товар?')) {
+                        if (this.state.deleteProduct(id)) {
+                            this.ui.renderProducts();
+                            this.ui.updateDashboard();
+                            this.ui.showNotification('Товар удален', 'warning');
+                        }
+                    }
+                }
+            }
+
+            // Удаление изображения
+            if (e.target.closest('.delete-image')) {
+                const item = e.target.closest('.image-item');
+                if (item) {
+                    const id = parseInt(item.dataset.id);
+                    if (confirm('Вы уверены, что хотите удалить это изображение?')) {
+                        if (this.state.deleteImage(id)) {
+                            this.ui.renderImages();
+                            this.ui.showNotification('Изображение удалено', 'warning');
+                        }
+                    }
+                }
+            }
+
+            // Использование изображения
+            if (e.target.closest('.use-image')) {
+                const item = e.target.closest('.image-item');
+                if (item) {
+                    const id = parseInt(item.dataset.id);
+                    const image = this.state.images.find(img => img.id === id);
+                    if (image) {
+                        this.openImageBrowser(null, image.url);
+                    }
+                }
+            }
+
+            // Добавление первой услуги
+            if (e.target.closest('#addFirstService')) {
+                this.ui.fillServiceForm();
+                this.ui.openModal('serviceModal');
+            }
+
+            // Добавление первого товара
+            if (e.target.closest('#addFirstProduct')) {
+                this.ui.fillProductForm();
+                this.ui.openModal('productModal');
+            }
+
+            // Просмотр заявки
+            if (e.target.closest('.view-application')) {
+                const row = e.target.closest('.table-row');
+                if (row) {
+                    const id = parseInt(row.dataset.id);
+                    const application = this.state.applications.find(app => app.id === id);
+                    if (application) {
+                        this.viewApplication(application);
+                    }
+                }
+            }
+
+            // Изменение статуса заявки
+            if (e.target.closest('.change-status')) {
+                const row = e.target.closest('.table-row');
+                if (row) {
+                    const id = parseInt(row.dataset.id);
+                    const application = this.state.applications.find(app => app.id === id);
+                    if (application) {
+                        this.changeApplicationStatus(application);
+                    }
+                }
+            }
+        });
+
+        document.addEventListener('input', (e) => {
+            // Поиск услуг
+            if (e.target.id === 'serviceSearch') {
+                const searchTerm = e.target.value.toLowerCase();
+                document.querySelectorAll('.service-item').forEach(item => {
+                    const name = item.querySelector('h4').textContent.toLowerCase();
+                    const description = item.querySelector('p').textContent.toLowerCase();
+                    item.style.display = name.includes(searchTerm) || description.includes(searchTerm) ? '' : 'none';
                 });
             }
 
-            // F1 - Перейти к дашборду
-            if (e.key === 'F1') {
-                e.preventDefault();
-                this.ui.switchSection('dashboard');
+            // Поиск товаров
+            if (e.target.id === 'productSearch') {
+                const searchTerm = e.target.value.toLowerCase();
+                document.querySelectorAll('.product-item').forEach(item => {
+                    const name = item.querySelector('h4').textContent.toLowerCase();
+                    const description = item.querySelector('p').textContent.toLowerCase();
+                    item.style.display = name.includes(searchTerm) || description.includes(searchTerm) ? '' : 'none';
+                });
             }
         });
     }
 
-    openImageBrowser(targetInputId) {
-        // Заполняем браузер изображениями
-        const browser = document.getElementById('imageBrowser');
-        browser.innerHTML = this.state.images.map(img => `
-            <div class="browser-image ${this.state.selectedImage?.id === img.id ? 'selected' : ''}" 
-                 data-id="${img.id}" data-url="${img.url}">
-                <img src="${img.url}" alt="${img.name}">
-            </div>
-        `).join('');
-
-        // Добавляем обработчики выбора
-        browser.querySelectorAll('.browser-image').forEach(img => {
-            img.addEventListener('click', () => {
-                browser.querySelectorAll('.browser-image').forEach(i => i.classList.remove('selected'));
-                img.classList.add('selected');
-                this.state.selectedImage = {
-                    id: parseInt(img.dataset.id),
-                    url: img.dataset.url
-                };
-            });
-        });
-
-        // Обработчик выбора изображения
-        document.getElementById('selectImageBtn').onclick = () => {
-            if (this.state.selectedImage) {
-                document.getElementById(targetInputId).value = this.state.selectedImage.url;
-                this.ui.updateImagePreview(this.state.selectedImage.url);
-                this.ui.closeModal('imageBrowserModal');
-            }
-        };
-
-        this.ui.openModal('imageBrowserModal');
-    }
-
-    filterApplications(status) {
-        // Реализация фильтрации заявок
-        console.log('Фильтрация заявок по статусу:', status);
-        // В реальном приложении здесь была бы логика фильтрации
-    }
-
-    exportDataToFile(download = false) {
-        const data = {
-            services: this.state.data.services,
-            products: this.state.data.products,
-            exportedAt: new Date().toISOString()
-        };
-
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-
-        if (download) {
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `art17-backup-${new Date().toISOString().split('T')[0]}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+    openImageBrowser(targetInputId = null, imageUrl = null) {
+        if (imageUrl && targetInputId) {
+            document.getElementById(targetInputId).value = imageUrl;
+            this.ui.updateImagePreview(imageUrl);
+            this.ui.closeModal('imageBrowserModal');
         } else {
-            // Сохраняем в основной файл (эмулируем сохранение)
-            localStorage.setItem(ADMIN_CONFIG.STORAGE_KEY, JSON.stringify(data));
-            
-            // Здесь в реальном приложении был бы AJAX запрос на сервер
-            console.log('Данные для сохранения:', data);
+            this.ui.openModal('imageBrowserModal');
         }
+    }
 
-        URL.revokeObjectURL(url);
+    viewApplication(application) {
+        const modal = document.createElement('div');
+        modal.className = 'modal active';
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width: 600px">
+                <div class="modal-header">
+                    <h3>Заявка #${application.id}</h3>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="application-details">
+                        <div class="detail-row">
+                            <strong>Дата:</strong>
+                            <span>${new Date(application.date).toLocaleString()}</span>
+                        </div>
+                        <div class="detail-row">
+                            <strong>Имя:</strong>
+                            <span>${application.name}</span>
+                        </div>
+                        <div class="detail-row">
+                            <strong>Телефон:</strong>
+                            <span>${application.phone}</span>
+                        </div>
+                        <div class="detail-row">
+                            <strong>Email:</strong>
+                            <span>${application.email || 'Не указан'}</span>
+                        </div>
+                        <div class="detail-row">
+                            <strong>Сообщение:</strong>
+                            <p class="application-message">${application.message || 'Нет сообщения'}</p>
+                        </div>
+                        <div class="detail-row">
+                            <strong>Статус:</strong>
+                            <span class="status-badge status-${application.status || 'new'}">
+                                ${this.ui.getStatusText(application.status)}
+                            </span>
+                        </div>
+                        <div class="detail-row">
+                            <strong>Источник:</strong>
+                            <span>${application.source || 'Неизвестно'}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" id="changeStatusBtn">Изменить статус</button>
+                    <button class="btn btn-secondary close-view">Закрыть</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        modal.querySelector('.modal-close').addEventListener('click', () => {
+            modal.remove();
+        });
+
+        modal.querySelector('.close-view').addEventListener('click', () => {
+            modal.remove();
+        });
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+
+        modal.querySelector('#changeStatusBtn').addEventListener('click', () => {
+            modal.remove();
+            this.changeApplicationStatus(application);
+        });
+    }
+
+    changeApplicationStatus(application) {
+        const currentStatus = application.status || 'new';
+        const statuses = [
+            { value: 'new', label: 'Новая' },
+            { value: 'processed', label: 'В работе' },
+            { value: 'completed', label: 'Завершена' }
+        ];
+
+        const modal = document.createElement('div');
+        modal.className = 'modal active';
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width: 400px">
+                <div class="modal-header">
+                    <h3>Изменить статус заявки #${application.id}</h3>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Текущий статус:</label>
+                        <span class="status-badge status-${currentStatus}">
+                            ${this.ui.getStatusText(currentStatus)}
+                        </span>
+                    </div>
+                    <div class="form-group">
+                        <label for="newStatus">Новый статус:</label>
+                        <select id="newStatus" class="form-control">
+                            ${statuses.map(status => `
+                                <option value="${status.value}" ${currentStatus === status.value ? 'selected' : ''}>
+                                    ${status.label}
+                                </option>
+                            `).join('')}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" id="saveStatusBtn">Сохранить</button>
+                    <button class="btn btn-secondary" id="cancelStatusBtn">Отмена</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        modal.querySelector('.modal-close').addEventListener('click', () => {
+            modal.remove();
+        });
+
+        modal.querySelector('#cancelStatusBtn').addEventListener('click', () => {
+            modal.remove();
+        });
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+
+        modal.querySelector('#saveStatusBtn').addEventListener('click', () => {
+            const newStatus = modal.querySelector('#newStatus').value;
+            const index = this.state.applications.findIndex(app => app.id === application.id);
+            
+            if (index !== -1) {
+                this.state.applications[index].status = newStatus;
+                localStorage.setItem(ADMIN_CONFIG.APPLICATIONS_KEY, JSON.stringify(this.state.applications));
+                
+                this.ui.renderApplications();
+                this.ui.updateDashboard();
+                this.ui.showNotification(`Статус заявки #${application.id} изменен`);
+            }
+            
+            modal.remove();
+        });
     }
 
     createBackup() {
-        const backup = {
+        const backupData = {
+            timestamp: new Date().toISOString(),
             data: this.state.data,
             images: this.state.images,
             settings: this.state.settings,
-            applications: this.state.applications,
-            timestamp: new Date().toISOString()
+            applications: this.state.applications
         };
 
-        const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+        const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `art17-full-backup-${new Date().toISOString().split('T')[0]}.json`;
+        a.download = `art17-backup-${new Date().toISOString().slice(0, 10)}.json`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -1125,157 +1423,243 @@ class EventManager {
 
         this.ui.showNotification('Бэкап создан и скачан');
     }
+
+    exportDataToFile(includeApplications = false) {
+        const exportData = {
+            timestamp: new Date().toISOString(),
+            version: '1.0',
+            data: this.state.data,
+            settings: this.state.settings,
+            images: this.state.images
+        };
+
+        if (includeApplications) {
+            exportData.applications = this.state.applications;
+        }
+
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `art17-export-${new Date().toISOString().slice(0, 10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        this.ui.showNotification('Данные экспортированы');
+    }
+
+    importDataFromFile(file) {
+        const reader = new FileReader();
+        
+        reader.onload = (e) => {
+            try {
+                const importedData = JSON.parse(e.target.result);
+                
+                if (confirm('Это заменит текущие данные. Продолжить?')) {
+                    if (importedData.data) {
+                        this.state.data = importedData.data;
+                        this.state.saveData();
+                    }
+                    
+                    if (importedData.images) {
+                        this.state.images = importedData.images;
+                        this.state.saveImages();
+                    }
+                    
+                    if (importedData.settings) {
+                        this.state.settings = importedData.settings;
+                        this.state.saveSettings();
+                    }
+                    
+                    if (importedData.applications) {
+                        this.state.applications = importedData.applications;
+                        localStorage.setItem(ADMIN_CONFIG.APPLICATIONS_KEY, JSON.stringify(this.state.applications));
+                    }
+                    
+                    this.ui.renderServices();
+                    this.ui.renderProducts();
+                    this.ui.renderImages();
+                    this.ui.updateDashboard();
+                    this.ui.showNotification('Данные успешно импортированы');
+                }
+            } catch (error) {
+                console.error('Ошибка импорта:', error);
+                this.ui.showNotification('Ошибка импорта файла', 'error');
+            }
+        };
+        
+        reader.readAsText(file);
+    }
 }
 
-// ===== ИНИЦИАЛИЗАЦИЯ =====
+// ===== ИНИЦИАЛИЗАЦИЯ ПРИЛОЖЕНИЯ =====
+class AdminApp {
+    constructor() {
+        this.state = new AdminState();
+        this.ui = new UIManager(this.state);
+        this.events = new EventManager(this.state, this.ui);
+        
+        this.init();
+    }
+
+    init() {
+        console.log('AdminApp инициализирован');
+        
+        // Начальная загрузка интерфейса
+        this.ui.switchSection('dashboard');
+        this.ui.renderServices();
+        this.ui.renderProducts();
+        this.ui.renderImages();
+        this.ui.renderApplications();
+        this.ui.updateDashboard();
+        
+        // Настройка делегирования событий
+        this.events.setupEventDelegation();
+        
+        // Импорт данных
+        this.setupImport();
+        
+        // Автосохранение
+        this.setupAutoSave();
+        
+        // Проверка обновлений
+        this.checkForUpdates();
+    }
+
+    setupImport() {
+        const importInput = document.createElement('input');
+        importInput.type = 'file';
+        importInput.accept = '.json';
+        importInput.style.display = 'none';
+        document.body.appendChild(importInput);
+
+        document.getElementById('importData')?.addEventListener('click', () => {
+            importInput.click();
+        });
+
+        importInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                this.events.importDataFromFile(file);
+                importInput.value = '';
+            }
+        });
+    }
+
+    setupAutoSave() {
+        let saveTimeout;
+        
+        document.addEventListener('input', (e) => {
+            if (e.target.closest('.form-control')) {
+                clearTimeout(saveTimeout);
+                saveTimeout = setTimeout(() => {
+                    this.state.saveData();
+                    this.ui.showNotification('Автосохранение...', 'info');
+                }, 2000);
+            }
+        });
+    }
+
+    checkForUpdates() {
+        // Здесь можно добавить проверку обновлений
+        const lastUpdate = localStorage.getItem('art17_last_update');
+        const now = new Date();
+        
+        if (!lastUpdate || (now - new Date(lastUpdate)) > 7 * 24 * 60 * 60 * 1000) {
+            console.log('Рекомендуется проверить обновления данных');
+        }
+        
+        localStorage.setItem('art17_last_update', now.toISOString());
+    }
+}
+
+// ===== ЗАПУСК ПРИЛОЖЕНИЯ =====
 document.addEventListener('DOMContentLoaded', () => {
-    // Инициализация состояния
-    const state = new AdminState();
-    
-    // Инициализация UI
-    const ui = new UIManager(state);
-    
-    // Инициализация обработчиков событий
-    const events = new EventManager(state, ui);
-    
-    // Начальная загрузка данных
-    ui.updateDashboard();
-    ui.renderServices();
-    ui.renderProducts();
-    ui.renderImages();
-    ui.renderApplications();
-    
-    // Делегирование событий для динамических элементов
-    document.addEventListener('click', (e) => {
-        // Редактирование услуги
-        if (e.target.closest('.edit-service')) {
-            const item = e.target.closest('.service-item');
-            const id = parseInt(item.dataset.id);
-            const service = state.data.services.find(s => s.id === id);
-            if (service) {
-                ui.fillServiceForm(service);
-                ui.openModal('serviceModal');
+    try {
+        window.adminApp = new AdminApp();
+        console.log('Приложение успешно запущено');
+        
+        // Глобальные функции для использования в HTML
+        window.uploadImage = function(url, name) {
+            window.adminApp.state.addImage(url, name);
+            window.adminApp.ui.renderImages();
+            window.adminApp.ui.showNotification('Изображение добавлено');
+        };
+        
+        window.deleteItem = function(type, id) {
+            if (type === 'service') {
+                window.adminApp.state.deleteService(id);
+                window.adminApp.ui.renderServices();
+            } else if (type === 'product') {
+                window.adminApp.state.deleteProduct(id);
+                window.adminApp.ui.renderProducts();
             }
-        }
+            window.adminApp.ui.updateDashboard();
+        };
         
-        // Удаление услуги
-        if (e.target.closest('.delete-service')) {
-            const item = e.target.closest('.service-item');
-            const id = parseInt(item.dataset.id);
-            if (id && confirm('Удалить эту услугу?')) {
-                state.deleteService(id);
-                ui.renderServices();
-                ui.updateDashboard();
-                ui.showNotification('Услуга удалена', 'warning');
-            }
-        }
+    } catch (error) {
+        console.error('Ошибка инициализации приложения:', error);
         
-        // Редактирование товара
-        if (e.target.closest('.edit-product')) {
-            const item = e.target.closest('.product-item');
-            const id = parseInt(item.dataset.id);
-            const product = state.data.products.find(p => p.id === id);
-            if (product) {
-                ui.fillProductForm(product);
-                ui.openModal('productModal');
-            }
-        }
-        
-        // Удаление товара
-        if (e.target.closest('.delete-product')) {
-            const item = e.target.closest('.product-item');
-            const id = parseInt(item.dataset.id);
-            if (id && confirm('Удалить этот товар?')) {
-                state.deleteProduct(id);
-                ui.renderProducts();
-                ui.updateDashboard();
-                ui.showNotification('Товар удален', 'warning');
-            }
-        }
-        
-        // Использование изображения
-        if (e.target.closest('.use-image')) {
-            const item = e.target.closest('.image-item');
-            const id = parseInt(item.dataset.id);
-            const image = state.images.find(img => img.id === id);
-            if (image) {
-                state.selectedImage = image;
-                events.openImageBrowser('productImage');
-                ui.switchSection('products');
-            }
-        }
-        
-        // Удаление изображения
-        if (e.target.closest('.delete-image')) {
-            const item = e.target.closest('.image-item');
-            const id = parseInt(item.dataset.id);
-            if (id && confirm('Удалить это изображение?')) {
-                state.deleteImage(id);
-                ui.renderImages();
-                ui.showNotification('Изображение удалено', 'warning');
-            }
-        }
-        
-        // Просмотр заявки
-        if (e.target.closest('.view-application')) {
-            const row = e.target.closest('.table-row');
-            const id = row.dataset.id;
-            const app = state.applications.find(a => a.id === id);
-            if (app) {
-                alert(`
-Заявка #${app.id}
-Дата: ${new Date(app.date).toLocaleString()}
-Имя: ${app.name}
-Телефон: ${app.phone}
-Email: ${app.email}
-Интересует: ${app.interest}
-Сообщение: ${app.message || 'Нет сообщения'}
-                `);
-            }
-        }
-        
-        // Изменение статуса заявки
-        if (e.target.closest('.change-status')) {
-            const row = e.target.closest('.table-row');
-            const id = row.dataset.id;
-            const app = state.applications.find(a => a.id === id);
-            if (app) {
-                const newStatus = prompt('Введите новый статус (new, processed, completed):', app.status);
-                if (newStatus && ['new', 'processed', 'completed'].includes(newStatus)) {
-                    app.status = newStatus;
-                    localStorage.setItem(ADMIN_CONFIG.APPLICATIONS_KEY, JSON.stringify(state.applications));
-                    ui.renderApplications();
-                    ui.updateDashboard();
-                    ui.showNotification('Статус заявки обновлен');
-                }
-            }
-        }
-        
-        // Добавление первой услуги
-        if (e.target.closest('#addFirstService')) {
-            ui.fillServiceForm();
-            ui.openModal('serviceModal');
-        }
-        
-        // Добавление первого товар
-        if (e.target.closest('#addFirstProduct')) {
-            ui.fillProductForm();
-            ui.openModal('productModal');
-        }
-    });
-    
-    console.log('Админ-панель загружена!');
-    
-    // Периодическая проверка новых заявок (каждые 30 секунд)
-    setInterval(() => {
-        const oldCount = state.applications.length;
-        state.applications = JSON.parse(localStorage.getItem(ADMIN_CONFIG.APPLICATIONS_KEY)) || [];
-        
-        if (state.applications.length > oldCount) {
-            ui.updateDashboard();
-            if (state.currentSection !== 'applications') {
-                ui.showNotification(`Новая заявка! Всего: ${state.applications.length}`, 'success');
-            }
-        }
-    }, 30000);
+        // Показать сообщение об ошибке
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error-message';
+        errorDiv.innerHTML = `
+            <h2>Ошибка загрузки административной панели</h2>
+            <p>${error.message}</p>
+            <p>Пожалуйста, обновите страницу или обратитесь к разработчику.</p>
+        `;
+        document.body.innerHTML = '';
+        document.body.appendChild(errorDiv);
+    }
 });
+
+// ===== ГЛОБАЛЬНЫЕ ФУНКЦИИ =====
+function toggleSidebar() {
+    const sidebar = document.querySelector('.sidebar');
+    sidebar.classList.toggle('active');
+}
+
+function openModal(modalId) {
+    window.adminApp.ui.openModal(modalId);
+}
+
+function closeModal(modalId) {
+    window.adminApp.ui.closeModal(modalId);
+}
+
+function showNotification(message, type = 'success') {
+    window.adminApp.ui.showNotification(message, type);
+}
+
+// Экспорт данных в формате JSON
+function exportToJSON() {
+    window.adminApp.events.exportDataToFile(true);
+}
+
+// Импорт данных из JSON файла
+function importFromJSON(event) {
+    const file = event.target.files[0];
+    if (file) {
+        window.adminApp.events.importDataFromFile(file);
+    }
+}
+
+// Очистка всех данных (с подтверждением)
+function clearAllData() {
+    if (confirm('ВНИМАНИЕ: Это удалит ВСЕ данные. Вы уверены?')) {
+        localStorage.clear();
+        location.reload();
+    }
+}
+
+// Сброс к заводским настройкам
+function factoryReset() {
+    if (confirm('Сбросить все настройки к заводским?')) {
+        localStorage.removeItem(ADMIN_CONFIG.STORAGE_KEY);
+        localStorage.removeItem(ADMIN_CONFIG.IMAGES_KEY);
+        localStorage.removeItem(ADMIN_CONFIG.SETTINGS_KEY);
+        location.reload();
+    }
+}
