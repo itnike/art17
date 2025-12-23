@@ -2,10 +2,9 @@
 const CONFIG = {
     API_URL: 'data/products.json',
     STORAGE_KEY: 'art17_applications',
-    MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB
+    ADMIN_STORAGE_KEY: 'art17_admin_data',
     PHONE_REGEX: /^[\+]?[78]?[\s\-]?\(?\d{3}\)?[\s\-]?\d{3}[\s\-]?\d{2}[\s\-]?\d{2}$/,
-    EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-    LOADING_DELAY: 300 // ms
+    EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 };
 
 // ===== STATE MANAGEMENT =====
@@ -14,9 +13,41 @@ const AppState = {
     products: [],
     services: [],
     applications: [],
+    siteData: null,
     
-    init() {
+    async init() {
         this.applications = this.loadApplications();
+        await this.loadSiteData();
+    },
+    
+    async loadSiteData() {
+        try {
+            // Пытаемся загрузить из админки (localStorage)
+            const adminData = localStorage.getItem(CONFIG.ADMIN_STORAGE_KEY);
+            if (adminData) {
+                this.siteData = JSON.parse(adminData);
+                console.log('Данные загружены из админки');
+            } else {
+                // Загружаем из файла
+                const response = await fetch(CONFIG.API_URL);
+                if (response.ok) {
+                    this.siteData = await response.json();
+                    console.log('Данные загружены из файла');
+                } else {
+                    console.error('Файл с данными не найден');
+                    this.siteData = { services: [], products: [] };
+                }
+            }
+            
+            this.services = this.siteData.services || [];
+            this.products = this.siteData.products || [];
+            
+        } catch (error) {
+            console.error('Ошибка загрузки данных:', error);
+            this.siteData = { services: [], products: [] };
+            this.services = [];
+            this.products = [];
+        }
     },
     
     loadApplications() {
@@ -38,172 +69,301 @@ const AppState = {
                 status: 'new'
             });
             localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(this.applications));
+            
+            // Показываем уведомление
+            this.showNotification('Заявка сохранена!');
+            
             return true;
         } catch (error) {
             console.error('Ошибка сохранения заявки:', error);
             return false;
         }
-    }
-};
-
-// ===== DOM ELEMENTS =====
-const Elements = {
-    get mobileMenuBtn() {
-        return document.querySelector('.mobile-menu-btn');
-    },
-    get navLinks() {
-        return document.querySelector('.nav-links');
-    },
-    get contactForm() {
-        return document.getElementById('contactForm');
-    },
-    get scrollTopBtn() {
-        return document.querySelector('.scroll-top-btn');
-    },
-    get header() {
-        return document.querySelector('.main-header');
-    }
-};
-
-// ===== API SERVICE =====
-const ApiService = {
-    async fetchData() {
-        try {
-            const response = await fetch(CONFIG.API_URL);
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            return await response.json();
-        } catch (error) {
-            console.error('Ошибка загрузки данных:', error);
-            throw error;
-        }
     },
     
-    async loadServices() {
-        try {
-            const data = await this.fetchData();
-            return data.services || [];
-        } catch (error) {
-            return [];
-        }
-    },
-    
-    async loadProducts() {
-        try {
-            const data = await this.fetchData();
-            return data.products || [];
-        } catch (error) {
-            return [];
+    showNotification(message) {
+        // Создаем простое уведомление
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4CAF50;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 5px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 9999;
+            animation: slideIn 0.3s ease;
+        `;
+        
+        notification.innerHTML = `
+            <i class="fas fa-check-circle" style="margin-right: 10px;"></i>
+            ${message}
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.style.animation = 'slideOut 0.3s ease';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+        
+        // Добавляем стили для анимации
+        if (!document.querySelector('#notification-styles')) {
+            const styles = document.createElement('style');
+            styles.id = 'notification-styles';
+            styles.textContent = `
+                @keyframes slideIn {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+                @keyframes slideOut {
+                    from { transform: translateX(0); opacity: 1; }
+                    to { transform: translateX(100%); opacity: 0; }
+                }
+            `;
+            document.head.appendChild(styles);
         }
     }
 };
 
-// ===== UI RENDERERS =====
-const UIRenderer = {
-    createSpinner() {
-        return `
+// ===== UI MANAGER =====
+const UIManager = {
+    init() {
+        this.renderServices();
+        this.renderProducts();
+        this.renderPortfolio();
+        this.setupEventListeners();
+    },
+    
+    async renderServices() {
+        const container = document.getElementById('services-container');
+        if (!container) return;
+        
+        // Показываем загрузку
+        container.innerHTML = `
             <div class="loading-spinner">
                 <div class="spinner"></div>
-                <p>Загрузка...</p>
+                <p>Загрузка услуг...</p>
             </div>
         `;
-    },
-    
-    createError(message) {
-        return `
-            <div class="error-message">
-                <i class="fas fa-exclamation-triangle"></i>
-                <p>${message}</p>
-                <button class="secondary-btn retry-btn">Повторить попытку</button>
-            </div>
-        `;
-    },
-    
-    renderServices(services) {
-        const container = document.getElementById('services-container');
-        if (!services.length) {
-            container.innerHTML = this.createError('Услуги временно недоступны');
-            return;
-        }
         
-        container.innerHTML = services.map(service => `
-            <div class="service-card" role="article">
-                <div class="service-icon">
-                    <i class="fas ${service.icon || 'fa-paint-brush'}"></i>
+        try {
+            await AppState.init();
+            const services = AppState.services;
+            
+            if (services.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-concierge-bell"></i>
+                        <h3>Услуги временно недоступны</h3>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = services.map(service => `
+                <div class="service-card">
+                    <div class="service-icon">
+                        <i class="fas ${service.icon || 'fa-paint-brush'}"></i>
+                    </div>
+                    <div class="service-info">
+                        <h3>${service.name}</h3>
+                        <p>${service.description}</p>
+                        ${service.features?.length ? `
+                            <ul class="service-features">
+                                ${service.features.map(f => `<li><i class="fas fa-check"></i> ${f}</li>`).join('')}
+                            </ul>
+                        ` : ''}
+                        <div class="service-price">${service.price}</div>
+                        <button class="cta-button secondary-btn" onclick="selectService(${service.id})">
+                            <i class="fas fa-calendar-check"></i>
+                            Заказать услугу
+                        </button>
+                    </div>
                 </div>
-                <div class="service-info">
-                    <h3>${service.name}</h3>
-                    <p>${service.description}</p>
-                    <div class="service-price">${service.price}</div>
-                    <button class="cta-button secondary-btn service-btn" 
-                            onclick="App.selectService(${service.id})"
-                            aria-label="Заказать услугу ${service.name}">
-                        <i class="fas fa-calendar-check"></i>
-                        <span>Заказать услугу</span>
-                    </button>
+            `).join('');
+            
+        } catch (error) {
+            console.error('Ошибка рендеринга услуг:', error);
+            container.innerHTML = `
+                <div class="error-message">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p>Ошибка загрузки услуг</p>
                 </div>
-            </div>
-        `).join('');
+            `;
+        }
     },
     
-    renderProducts(products) {
+    async renderProducts() {
         const container = document.getElementById('products-container');
-        if (!products.length) {
-            container.innerHTML = this.createError('Товары временно недоступны');
-            return;
-        }
+        if (!container) return;
         
-        container.innerHTML = products.map(product => `
-            <div class="product-card" role="article">
-                <img src="${product.image || 'https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?ixlib=rb-4.0.3'}" 
-                     alt="${product.name}" 
-                     class="product-image"
-                     loading="lazy"
-                     onerror="this.src='https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?ixlib=rb-4.0.3'">
-                <div class="product-info">
-                    <span class="product-category">${product.category || 'Оборудование'}</span>
-                    <h3>${product.name}</h3>
-                    <p>${product.description}</p>
-                    <div class="product-price">${product.price}</div>
-                    <p><i class="fas fa-map-marker-alt"></i> ${product.location || 'В наличии'}</p>
-                    <button class="cta-button primary-btn product-btn"
-                            onclick="App.selectProduct(${product.id})"
-                            aria-label="Заказать товар ${product.name}">
-                        <i class="fas fa-shopping-cart"></i>
-                        <span>Заказать</span>
-                    </button>
-                </div>
+        container.innerHTML = `
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+                <p>Загрузка товаров...</p>
             </div>
-        `).join('');
+        `;
+        
+        try {
+            const products = AppState.products;
+            
+            if (products.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-shopping-cart"></i>
+                        <h3>Товары временно недоступны</h3>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = products.map(product => `
+                <div class="product-card">
+                    <img src="${product.image || 'https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?ixlib=rb-4.0.3'}" 
+                         alt="${product.name}" 
+                         class="product-image"
+                         loading="lazy"
+                         onerror="this.src='https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?ixlib=rb-4.0.3'">
+                    <div class="product-info">
+                        <span class="product-category">${product.category || 'Оборудование'}</span>
+                        <h3>${product.name}</h3>
+                        <p>${product.description}</p>
+                        ${product.specs ? `
+                            <div class="product-specs">
+                                ${product.specs.material ? `<p><i class="fas fa-cube"></i> ${product.specs.material}</p>` : ''}
+                                ${product.specs.age ? `<p><i class="fas fa-child"></i> ${product.specs.age}</p>` : ''}
+                                ${product.specs.size ? `<p><i class="fas fa-ruler"></i> ${product.specs.size}</p>` : ''}
+                            </div>
+                        ` : ''}
+                        <div class="product-price">${product.price}</div>
+                        <p><i class="fas fa-map-marker-alt"></i> ${product.location || 'В наличии'}</p>
+                        <button class="cta-button primary-btn" onclick="selectProduct(${product.id})">
+                            <i class="fas fa-shopping-cart"></i>
+                            Заказать
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            
+        } catch (error) {
+            console.error('Ошибка рендеринга товаров:', error);
+            container.innerHTML = `
+                <div class="error-message">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p>Ошибка загрузки товаров</p>
+                </div>
+            `;
+        }
     },
     
-    renderPortfolio(products) {
+    renderPortfolio() {
         const container = document.getElementById('portfolio-container');
-        if (!products.length) {
-            container.innerHTML = this.createError('Портфолио временно недоступно');
+        if (!container) return;
+        
+        const products = AppState.products;
+        
+        if (products.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-images"></i>
+                    <h3>Портфолио временно недоступно</h3>
+                </div>
+            `;
             return;
         }
         
-        container.innerHTML = products.map(product => `
-            <div class="portfolio-item" role="article">
+        // Берем первые 6 товаров для портфолио
+        const portfolioItems = products.slice(0, 6);
+        
+        container.innerHTML = portfolioItems.map(product => `
+            <div class="portfolio-item">
                 <img src="${product.image || 'https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?ixlib=rb-4.0.3'}" 
                      alt="${product.name}"
                      loading="lazy"
                      onerror="this.src='https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?ixlib=rb-4.0.3'">
                 <div class="portfolio-overlay">
                     <h3>${product.name}</h3>
-                    <p>${product.location || 'Реализованный проект'}</p>
+                    <p>${product.category || 'Проект'}</p>
                     <p>${product.price}</p>
                 </div>
             </div>
         `).join('');
-    }
-};
-
-// ===== FORM VALIDATION =====
-const FormValidator = {
+    },
+    
+    setupEventListeners() {
+        // Мобильное меню
+        const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+        const navLinks = document.querySelector('.nav-links');
+        
+        if (mobileMenuBtn) {
+            mobileMenuBtn.addEventListener('click', () => {
+                navLinks.classList.toggle('active');
+                mobileMenuBtn.setAttribute('aria-expanded', 
+                    navLinks.classList.contains('active'));
+            });
+        }
+        
+        // Плавная прокрутка
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                if (targetId === '#') return;
+                
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    const headerHeight = document.querySelector('header')?.offsetHeight || 80;
+                    const targetPosition = targetElement.offsetTop - headerHeight;
+                    
+                    window.scrollTo({
+                        top: targetPosition,
+                        behavior: 'smooth'
+                    });
+                    
+                    // Закрываем мобильное меню
+                    if (navLinks) navLinks.classList.remove('active');
+                }
+            });
+        });
+        
+        // Форма
+        const contactForm = document.getElementById('contactForm');
+        if (contactForm) {
+            contactForm.addEventListener('submit', this.handleFormSubmit.bind(this));
+            
+            // Валидация в реальном времени
+            ['name', 'phone', 'email'].forEach(field => {
+                const input = document.getElementById(field);
+                if (input) {
+                    input.addEventListener('blur', () => this.validateField(field, input.value));
+                }
+            });
+        }
+        
+        // Кнопка "Наверх"
+        const scrollTopBtn = document.querySelector('.scroll-top-btn');
+        if (scrollTopBtn) {
+            scrollTopBtn.addEventListener('click', () => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+            
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 500) {
+                    scrollTopBtn.classList.add('visible');
+                } else {
+                    scrollTopBtn.classList.remove('visible');
+                }
+            });
+        }
+        
+        // Подсветка активного раздела при скролле
+        window.addEventListener('scroll', this.highlightActiveSection.bind(this));
+    },
+    
     validateField(field, value) {
         const errorElement = document.getElementById(`${field}-error`);
-        
         if (!errorElement) return true;
         
         errorElement.textContent = '';
@@ -211,40 +371,33 @@ const FormValidator = {
         switch (field) {
             case 'name':
                 if (!value.trim()) {
-                    errorElement.textContent = 'Пожалуйста, введите ваше имя';
+                    errorElement.textContent = 'Введите имя';
                     return false;
                 }
                 if (value.length < 2) {
-                    errorElement.textContent = 'Имя должно содержать минимум 2 символа';
+                    errorElement.textContent = 'Минимум 2 символа';
                     return false;
                 }
                 break;
                 
             case 'phone':
                 if (!value.trim()) {
-                    errorElement.textContent = 'Пожалуйста, введите телефон';
+                    errorElement.textContent = 'Введите телефон';
                     return false;
                 }
                 if (!CONFIG.PHONE_REGEX.test(value)) {
-                    errorElement.textContent = 'Введите корректный номер телефона';
+                    errorElement.textContent = 'Неверный формат телефона';
                     return false;
                 }
                 break;
                 
             case 'email':
                 if (!value.trim()) {
-                    errorElement.textContent = 'Пожалуйста, введите email';
+                    errorElement.textContent = 'Введите email';
                     return false;
                 }
                 if (!CONFIG.EMAIL_REGEX.test(value)) {
-                    errorElement.textContent = 'Введите корректный email адрес';
-                    return false;
-                }
-                break;
-                
-            case 'message':
-                if (value.length > 1000) {
-                    errorElement.textContent = 'Сообщение не должно превышать 1000 символов';
+                    errorElement.textContent = 'Неверный формат email';
                     return false;
                 }
                 break;
@@ -253,108 +406,10 @@ const FormValidator = {
         return true;
     },
     
-    validateForm(formData) {
-        let isValid = true;
-        
-        isValid = this.validateField('name', formData.name) && isValid;
-        isValid = this.validateField('phone', formData.phone) && isValid;
-        isValid = this.validateField('email', formData.email) && isValid;
-        isValid = this.validateField('message', formData.message) && isValid;
-        
-        return isValid;
-    }
-};
-
-// ===== EVENT HANDLERS =====
-const EventHandlers = {
-    init() {
-        // Мобильное меню
-        if (Elements.mobileMenuBtn) {
-            Elements.mobileMenuBtn.addEventListener('click', this.toggleMobileMenu);
-        }
-        
-        // Закрытие меню при клике на ссылку
-        document.querySelectorAll('.nav-link').forEach(link => {
-            link.addEventListener('click', () => {
-                if (Elements.navLinks.classList.contains('active')) {
-                    this.toggleMobileMenu();
-                }
-            });
-        });
-        
-        // Плавная прокрутка
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', this.handleSmoothScroll);
-        });
-        
-        // Форма
-        if (Elements.contactForm) {
-            Elements.contactForm.addEventListener('submit', this.handleFormSubmit);
-            
-            // Валидация в реальном времени
-            ['name', 'phone', 'email', 'message'].forEach(field => {
-                const input = document.getElementById(field);
-                if (input) {
-                    input.addEventListener('blur', (e) => {
-                        FormValidator.validateField(field, e.target.value);
-                    });
-                }
-            });
-        }
-        
-        // Кнопка "Наверх"
-        if (Elements.scrollTopBtn) {
-            Elements.scrollTopBtn.addEventListener('click', this.scrollToTop);
-        }
-        
-        // Отслеживание скролла
-        window.addEventListener('scroll', this.handleScroll);
-        
-        // Клик вне меню
-        document.addEventListener('click', this.handleOutsideClick);
-        
-        // Клавиша Escape
-        document.addEventListener('keydown', this.handleEscapeKey);
-    },
-    
-    toggleMobileMenu() {
-        const btn = Elements.mobileMenuBtn;
-        const menu = Elements.navLinks;
-        
-        btn.classList.toggle('active');
-        menu.classList.toggle('active');
-        btn.setAttribute('aria-expanded', btn.classList.contains('active'));
-        
-        // Блокировка скролла
-        document.body.style.overflow = btn.classList.contains('active') ? 'hidden' : '';
-    },
-    
-    handleSmoothScroll(e) {
-        e.preventDefault();
-        const targetId = this.getAttribute('href');
-        if (targetId === '#') return;
-        
-        const targetElement = document.querySelector(targetId);
-        if (targetElement) {
-            const headerHeight = Elements.header?.offsetHeight || 80;
-            const targetPosition = targetElement.offsetTop - headerHeight;
-            
-            window.scrollTo({
-                top: targetPosition,
-                behavior: 'smooth'
-            });
-            
-            // Обновление активной ссылки
-            document.querySelectorAll('.nav-link').forEach(link => {
-                link.classList.remove('active');
-            });
-            this.classList.add('active');
-        }
-    },
-    
     async handleFormSubmit(e) {
         e.preventDefault();
         
+        const form = e.target;
         const formData = {
             name: document.getElementById('name').value.trim(),
             phone: document.getElementById('phone').value.trim(),
@@ -363,91 +418,63 @@ const EventHandlers = {
             message: document.getElementById('message').value.trim()
         };
         
-        if (!FormValidator.validateForm(formData)) {
-            this.showNotification('Пожалуйста, исправьте ошибки в форме', 'error');
+        // Валидация
+        let isValid = true;
+        isValid = this.validateField('name', formData.name) && isValid;
+        isValid = this.validateField('phone', formData.phone) && isValid;
+        isValid = this.validateField('email', formData.email) && isValid;
+        
+        if (!isValid) {
+            alert('Пожалуйста, исправьте ошибки в форме');
             return;
         }
         
-        const submitBtn = this.querySelector('.submit-btn');
+        const submitBtn = form.querySelector('button[type="submit"]');
         const originalText = submitBtn.innerHTML;
         
-        // Показ состояния загрузки
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Отправка...</span>';
+        // Показываем загрузку
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Отправка...';
         submitBtn.disabled = true;
         
         try {
-            // Имитация отправки на сервер
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            
+            // Сохраняем заявку
             const saved = AppState.saveApplication(formData);
             
             if (saved) {
-                this.showNotification('Спасибо! Ваша заявка отправлена. Мы свяжемся с вами в течение часа.', 'success');
-                this.reset();
+                // Показываем уведомление
+                AppState.showNotification('Заявка отправлена! Мы свяжемся с вами в течение часа.');
                 
-                // Обновление счетчика заявок (если есть)
-                this.updateApplicationsCounter();
+                // Сбрасываем форму
+                form.reset();
+                
+                // Обновляем счетчик в админке (если открыта)
+                this.updateAdminCounter();
             } else {
                 throw new Error('Ошибка сохранения');
             }
         } catch (error) {
             console.error('Ошибка отправки формы:', error);
-            this.showNotification('Произошла ошибка при отправке. Пожалуйста, попробуйте позже.', 'error');
+            alert('Ошибка отправки. Пожалуйста, попробуйте позже.');
         } finally {
             submitBtn.innerHTML = originalText;
             submitBtn.disabled = false;
         }
     },
     
-    handleScroll() {
-        // Показ/скрытие кнопки "Наверх"
-        if (Elements.scrollTopBtn) {
-            if (window.scrollY > 500) {
-                Elements.scrollTopBtn.classList.add('visible');
-            } else {
-                Elements.scrollTopBtn.classList.remove('visible');
-            }
-        }
+    updateAdminCounter() {
+        // Обновляем счетчик заявок в localStorage для админки
+        const applications = AppState.applications;
+        const newCount = applications.filter(app => app.status === 'new').length;
         
-        // Добавление класса при скролле для header
-        if (Elements.header) {
-            if (window.scrollY > 100) {
-                Elements.header.classList.add('scrolled');
-            } else {
-                Elements.header.classList.remove('scrolled');
-            }
-        }
-        
-        // Подсветка активного раздела
-        this.highlightActiveSection();
-    },
-    
-    scrollToTop() {
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth'
-        });
-    },
-    
-    handleOutsideClick(e) {
-        if (!Elements.navLinks || !Elements.mobileMenuBtn) return;
-        
-        const isClickInsideMenu = Elements.navLinks.contains(e.target);
-        const isClickOnButton = Elements.mobileMenuBtn.contains(e.target);
-        
-        if (!isClickInsideMenu && !isClickOnButton && Elements.navLinks.classList.contains('active')) {
-            this.toggleMobileMenu();
-        }
-    },
-    
-    handleEscapeKey(e) {
-        if (e.key === 'Escape' && Elements.navLinks?.classList.contains('active')) {
-            this.toggleMobileMenu();
+        // Отправляем событие, если админка открыта
+        if (typeof window.updateAdminDashboard === 'function') {
+            window.updateAdminDashboard();
         }
     },
     
     highlightActiveSection() {
         const sections = document.querySelectorAll('section[id]');
+        const navLinks = document.querySelectorAll('.nav-link');
         const scrollPosition = window.scrollY + 100;
         
         sections.forEach(section => {
@@ -456,7 +483,7 @@ const EventHandlers = {
             const sectionId = section.getAttribute('id');
             
             if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
-                document.querySelectorAll('.nav-link').forEach(link => {
+                navLinks.forEach(link => {
                     link.classList.remove('active');
                     if (link.getAttribute('href') === `#${sectionId}`) {
                         link.classList.add('active');
@@ -464,251 +491,67 @@ const EventHandlers = {
                 });
             }
         });
-    },
-    
-    showNotification(message, type = 'info') {
-        // Удаляем существующие уведомления
-        const existing = document.querySelector('.notification');
-        if (existing) existing.remove();
-        
-        const notification = document.createElement('div');
-        notification.className = `notification ${type}`;
-        notification.innerHTML = `
-            <div class="notification-content">
-                <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
-                <span>${message}</span>
-            </div>
-            <button class="notification-close" aria-label="Закрыть уведомление">
-                <i class="fas fa-times"></i>
-            </button>
-        `;
-        
-        document.body.appendChild(notification);
-        
-        // Анимация появления
-        setTimeout(() => notification.classList.add('show'), 10);
-        
-        // Автоматическое скрытие
-        setTimeout(() => {
-            notification.classList.remove('show');
-            setTimeout(() => notification.remove(), 300);
-        }, 5000);
-        
-        // Закрытие по клику
-        notification.querySelector('.notification-close').addEventListener('click', () => {
-            notification.classList.remove('show');
-            setTimeout(() => notification.remove(), 300);
-        });
-    },
-    
-    updateApplicationsCounter() {
-        const counter = document.querySelector('.applications-counter');
-        if (counter) {
-            counter.textContent = AppState.applications.length;
-        }
     }
 };
 
-// ===== MAIN APPLICATION =====
-const App = {
-    async init() {
-        // Инициализация состояния
-        AppState.init();
+// ===== ГЛОБАЛЬНЫЕ ФУНКЦИИ =====
+function selectService(serviceId) {
+    const service = AppState.services.find(s => s.id === serviceId);
+    if (service) {
+        document.getElementById('interest').value = 'design';
+        document.getElementById('message').value = 
+            `Интересует услуга: ${service.name}\nЦена: ${service.price}\n\nДополнительная информация: `;
         
-        // Инициализация обработчиков событий
-        EventHandlers.init();
+        scrollToContact();
         
-        // Загрузка данных
-        await this.loadData();
-        
-        // Обновление счетчика заявок
-        EventHandlers.updateApplicationsCounter();
-        
-        console.log('Приложение инициализировано');
-    },
-    
-    async loadData() {
-        try {
-            // Показ спиннеров
-            this.showLoaders();
-            
-            // Параллельная загрузка данных
-            const [services, products] = await Promise.all([
-                ApiService.loadServices(),
-                ApiService.loadProducts()
-            ]);
-            
-            AppState.services = services;
-            AppState.products = products;
-            
-            // Рендеринг данных
-            UIRenderer.renderServices(services);
-            UIRenderer.renderProducts(products);
-            UIRenderer.renderPortfolio(products);
-            
-        } catch (error) {
-            console.error('Ошибка загрузки данных:', error);
-            this.showDataErrors();
-        } finally {
-            this.hideLoaders();
-        }
-    },
-    
-    showLoaders() {
-        ['services', 'products', 'portfolio'].forEach(type => {
-            const container = document.getElementById(`${type}-container`);
-            if (container) {
-                container.innerHTML = UIRenderer.createSpinner();
-            }
-        });
-    },
-    
-    hideLoaders() {
-        ['services', 'products', 'portfolio'].forEach(type => {
-            const loadingEl = document.getElementById(`${type}-loading`);
-            if (loadingEl) {
-                loadingEl.style.display = 'none';
-            }
-        });
-    },
-    
-    showDataErrors() {
-        ['services', 'products', 'portfolio'].forEach(type => {
-            const container = document.getElementById(`${type}-container`);
-            if (container) {
-                container.innerHTML = UIRenderer.createError('Данные временно недоступны. Пожалуйста, попробуйте позже.');
-                
-                // Добавляем обработчик для кнопки повтора
-                const retryBtn = container.querySelector('.retry-btn');
-                if (retryBtn) {
-                    retryBtn.addEventListener('click', () => this.loadData());
-                }
-            }
-        });
-    },
-    
-    selectService(serviceId) {
-        const service = AppState.services.find(s => s.id === serviceId);
-        if (service) {
-            document.getElementById('interest').value = 'service';
-            document.getElementById('message').value = 
-                `Интересует услуга: ${service.name}\n${service.price}\n\nДополнительная информация: `;
-            
-            // Прокрутка к форме
-            window.scrollTo({
-                top: document.getElementById('contact').offsetTop - 80,
-                behavior: 'smooth'
-            });
-            
-            // Фокус на поле сообщения
-            setTimeout(() => document.getElementById('message').focus(), 500);
-        }
-    },
-    
-    selectProduct(productId) {
-        const product = AppState.products.find(p => p.id === productId);
-        if (product) {
-            document.getElementById('interest').value = 'product';
-            document.getElementById('message').value = 
-                `Интересует товар: ${product.name}\nЦена: ${product.price}\nЛокация: ${product.location}\n\nДополнительная информация: `;
-            
-            // Прокрутка к форме
-            window.scrollTo({
-                top: document.getElementById('contact').offsetTop - 80,
-                behavior: 'smooth'
-            });
-            
-            // Фокус на поле сообщения
-            setTimeout(() => document.getElementById('message').focus(), 500);
-        }
+        // Фокус на поле сообщения
+        setTimeout(() => document.getElementById('message').focus(), 500);
     }
-};
+}
 
-// ===== ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ =====
-document.addEventListener('DOMContentLoaded', () => {
-    App.init();
-});
+function selectProduct(productId) {
+    const product = AppState.products.find(p => p.id === productId);
+    if (product) {
+        document.getElementById('interest').value = 'equipment';
+        document.getElementById('message').value = 
+            `Интересует товар: ${product.name}\nЦена: ${product.price}\nКатегория: ${product.category}\n\nДополнительная информация: `;
+        
+        scrollToContact();
+        
+        // Фокус на поле сообщения
+        setTimeout(() => document.getElementById('message').focus(), 500);
+    }
+}
 
-// ===== ГЛОБАЛЬНЫЕ ФУНКЦИИ ДЛЯ HTML =====
-window.scrollToContact = function() {
+function scrollToContact() {
     const contactSection = document.getElementById('contact');
     if (contactSection) {
+        const headerHeight = document.querySelector('header')?.offsetHeight || 80;
         window.scrollTo({
-            top: contactSection.offsetTop - 80,
+            top: contactSection.offsetTop - headerHeight,
             behavior: 'smooth'
         });
     }
-};
+}
 
-// Экспортируем App для доступа из HTML
-window.App = App;
+// ===== ИНИЦИАЛИЗАЦИЯ =====
+document.addEventListener('DOMContentLoaded', () => {
+    UIManager.init();
+    
+    // Проверяем, есть ли сохраненные заявки
+    const savedApps = localStorage.getItem(CONFIG.STORAGE_KEY);
+    if (savedApps) {
+        console.log('Сохраненных заявок:', JSON.parse(savedApps).length);
+    }
+    
+    // Проверяем, есть ли данные админки
+    const adminData = localStorage.getItem(CONFIG.ADMIN_STORAGE_KEY);
+    if (adminData) {
+        console.log('Данные админки загружены');
+    }
+});
 
-// ===== СТИЛИ ДЛЯ УВЕДОМЛЕНИЙ =====
-const notificationStyles = document.createElement('style');
-notificationStyles.textContent = `
-    .notification {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: white;
-        padding: 1rem 1.5rem;
-        border-radius: 8px;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.15);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
-        max-width: 400px;
-        transform: translateX(120%);
-        transition: transform 0.3s ease;
-        z-index: 9999;
-        border-left: 4px solid #3182CE;
-    }
-    
-    .notification.show {
-        transform: translateX(0);
-    }
-    
-    .notification.success {
-        border-left-color: #38A169;
-    }
-    
-    .notification.error {
-        border-left-color: #E53E3E;
-    }
-    
-    .notification-content {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        color: #2D3748;
-    }
-    
-    .notification-content i {
-        font-size: 1.2rem;
-    }
-    
-    .notification.success .notification-content i {
-        color: #38A169;
-    }
-    
-    .notification.error .notification-content i {
-        color: #E53E3E;
-    }
-    
-    .notification-close {
-        background: none;
-        border: none;
-        color: #A0AEC0;
-        cursor: pointer;
-        padding: 0.25rem;
-        font-size: 0.875rem;
-        transition: color 0.2s;
-    }
-    
-    .notification-close:hover {
-        color: #718096;
-    }
-`;
-
-document.head.appendChild(notificationStyles);
+// Экспортируем функции для глобального доступа
+window.selectService = selectService;
+window.selectProduct = selectProduct;
+window.scrollToContact = scrollToContact;
