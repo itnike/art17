@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ-панель | Арт 17</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="admin.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-paint-brush"></i>
+                </div>
+                <h1>Арт<span>17</span></h1>
+                <p>Админ-панель</p>
+            </div>
+
+            <nav class="admin-nav">
+                <ul>
+                    <li><a href="#dashboard" class="nav-link active" data-section="dashboard">
+                        <i class="fas fa-tachometer-alt"></i> Дашборд
+                    </a></li>
+                    <li><a href="#services" class="nav-link" data-section="services">
+                        <i class="fas fa-concierge-bell"></i> Услуги
+                    </a></li>
+                    <li><a href="#products" class="nav-link" data-section="products">
+                        <i class="fas fa-shopping-cart"></i> Товары
+                    </a></li>
+                    <li><a href="#portfolio" class="nav-link" data-section="portfolio">
+                        <i class="fas fa-images"></i> Портфолио
+                    </a></li>
+                    <li><a href="#images" class="nav-link" data-section="images">
+                        <i class="fas fa-image"></i> Менеджер картинок
+                    </a></li>
+                    <li><a href="#applications" class="nav-link" data-section="applications">
+                        <i class="fas fa-inbox"></i> Заявки <span class="badge" id="app-count">0</span>
+                    </a></li>
+                    <li><a href="#settings" class="nav-link" data-section="settings">
+                        <i class="fas fa-cog"></i> Настройки
+                    </a></li>
+                </ul>
+            </nav>
+
+            <div class="user-profile">
+                <div class="user-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="user-info">
+                    <p class="user-name">Администратор</p>
+                    <p class="user-role">Владелец сайта</p>
+                </div>
+                <a href="../index.html" class="site-link" target="_blank">
+                    <i class="fas fa-external-link-alt"></i> На сайт
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="admin-header">
+                <div class="header-left">
+                    <button class="menu-toggle" id="menuToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h2 id="pageTitle">Дашборд</h2>
+                </div>
+                <div class="header-right">
+                    <button class="btn btn-primary" id="saveAll">
+                        <i class="fas fa-save"></i> Сохранить все изменения
+                    </button>
+                    <button class="btn btn-secondary" id="exportData">
+                        <i class="fas fa-download"></i> Экспорт данных
+                    </button>
+                </div>
+            </header>
+
+            <!-- Content Sections -->
+            <div class="content-wrapper">
+                <!-- Dashboard Section -->
+                <section id="dashboard" class="content-section active">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon primary">
+                                <i class="fas fa-concierge-bell"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="services-count">0</h3>
+                                <p>Услуг</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon success">
+                                <i class="fas fa-shopping-cart"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="products-count">0</h3>
+                                <p>Товаров</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card warning">
+                                <div class="stat-icon warning">
+                                    <i class="fas fa-images"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <h3 id="portfolio-count">0</h3>
+                                    <p>Работ в портфолио</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon danger">
+                                <i class="fas fa-inbox"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="applications-count">0</h3>
+                                <p>Новых заявок</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="quick-actions">
+                        <h3>Быстрые действия</h3>
+                        <div class="actions-grid">
+                            <button class="action-btn" data-action="add-service">
+                                <i class="fas fa-plus-circle"></i>
+                                <span>Добавить услугу</span>
+                            </button>
+                            <button class="action-btn" data-action="add-product">
+                                <i class="fas fa-plus-circle"></i>
+                                <span>Добавить товар</span>
+                            </button>
+                            <button class="action-btn" data-action="upload-image">
+                                <i class="fas fa-upload"></i>
+                                <span>Загрузить картинку</span>
+                            </button>
+                            <button class="action-btn" data-action="backup">
+                                <i class="fas fa-database"></i>
+                                <span>Создать бэкап</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="recent-activity">
+                        <h3>Последние изменения</h3>
+                        <div class="activity-list" id="activityList">
+                            <!-- Активность загружается динамически -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Services Section -->
+                <section id="services" class="content-section">
+                    <div class="section-header">
+                        <h3>Управление услугами</h3>
+                        <button class="btn btn-success" id="addServiceBtn">
+                            <i class="fas fa-plus"></i> Добавить услугу
+                        </button>
+                    </div>
+
+                    <div class="services-list" id="servicesList">
+                        <!-- Список услуг загружается динамически -->
+                    </div>
+                </section>
+
+                <!-- Products Section -->
+                <section id="products" class="content-section">
+                    <div class="section-header">
+                        <h3>Управление товарами</h3>
+                        <button class="btn btn-success" id="addProductBtn">
+                            <i class="fas fa-plus"></i> Добавить товар
+                        </button>
+                    </div>
+
+                    <div class="products-list" id="productsList">
+                        <!-- Список товаров загружается динамически -->
+                    </div>
+                </section>
+
+                <!-- Portfolio Section -->
+                <section id="portfolio" class="content-section">
+                    <div class="section-header">
+                        <h3>Управление портфолио</h3>
+                        <p>Здесь отображаются товары, которые показываются в портфолио на сайте</p>
+                    </div>
+
+                    <div class="portfolio-management">
+                        <div class="form-group">
+                            <label>Выберите товары для портфолио:</label>
+                            <div class="portfolio-selection" id="portfolioSelection">
+                                <!-- Чекбоксы для выбора товаров -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Image Manager Section -->
+                <section id="images" class="content-section">
+                    <div class="section-header">
+                        <h3>Менеджер картинок</h3>
+                        <div class="upload-area" id="uploadArea">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>Перетащите картинки сюда или</p>
+                            <input type="file" id="imageUpload" multiple accept="image/*" style="display: none;">
+                            <button class="btn btn-primary" id="browseBtn">Выберите файлы</button>
+                            <p class="upload-hint">Поддерживаются: JPG, PNG, GIF. Макс. размер: 5MB</p>
+                        </div>
+                    </div>
+
+                    <div class="image-gallery" id="imageGallery">
+                        <!-- Галерея загруженных картинок -->
+                    </div>
+                </section>
+
+                <!-- Applications Section -->
+                <section id="applications" class="content-section">
+                    <div class="section-header">
+                        <h3>Заявки с сайта</h3>
+                        <div class="filter-controls">
+                            <select id="statusFilter" class="form-select">
+                                <option value="all">Все заявки</option>
+                                <option value="new">Новые</option>
+                                <option value="processed">В работе</option>
+                                <option value="completed">Завершены</option>
+                            </select>
+                            <button class="btn btn-secondary" id="clearApplications">
+                                <i class="fas fa-trash"></i> Очистить старые
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="applications-table" id="applicationsTable">
+                        <!-- Таблица заявок -->
+                    </div>
+                </section>
+
+                <!-- Settings Section -->
+                <section id="settings" class="content-section">
+                    <div class="section-header">
+                        <h3>Настройки сайта</h3>
+                    </div>
+
+                    <div class="settings-form">
+                        <div class="form-group">
+                            <label>Название компании</label>
+                            <input type="text" id="companyName" class="form-input" value="Арт 17">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Телефон</label>
+                            <input type="text" id="companyPhone" class="form-input" value="8 (499) 688-63-54">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="companyEmail" class="form-input" value="sales@pandaplay.ru">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Адрес</label>
+                            <input type="text" id="companyAddress" class="form-input" value="Калуга, Аэропортовский переулок 11">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Часы работы</label>
+                            <textarea id="companyHours" class="form-textarea" rows="3">Пн-Пт: 8:00 - 17:00
+Сб: 8:00 - 16:00
+Вс: выходной</textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Описание для SEO</label>
+                            <textarea id="seoDescription" class="form-textarea" rows="3">Профессиональный дизайн интерьеров от студии "Арт 17". Создаем уникальные пространства для игр на открытом воздухе.</textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Ключевые слова (через запятую)</label>
+                            <input type="text" id="seoKeywords" class="form-input" value="дизайн интерьеров, игровые площадки, детские площадки, оборудование, монтаж">
+                        </div>
+
+                        <div class="form-actions">
+                            <button class="btn btn-primary" id="saveSettings">
+                                <i class="fas fa-save"></i> Сохранить настройки
+                            </button>
+                            <button class="btn btn-secondary" id="resetSettings">
+                                <i class="fas fa-undo"></i> Сбросить к заводским
+                            </button>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- Modals -->
+        <div class="modal" id="serviceModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Редактирование услуги</h3>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="serviceForm">
+                        <input type="hidden" id="serviceId">
+                        <div class="form-group">
+                            <label>Название услуги *</label>
+                            <input type="text" id="serviceName" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Описание *</label>
+                            <textarea id="serviceDescription" class="form-textarea" rows="3" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Цена *</label>
+                            <input type="text" id="servicePrice" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Иконка FontAwesome</label>
+                            <input type="text" id="serviceIcon" class="form-input" placeholder="fa-pencil-ruler">
+                            <small>Примеры: fa-paint-brush, fa-tools, fa-clipboard-check</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Особенности (каждая с новой строки)</label>
+                            <textarea id="serviceFeatures" class="form-textarea" rows="4"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary modal-close">Отмена</button>
+                    <button class="btn btn-danger" id="deleteServiceBtn" style="display: none;">Удалить</button>
+                    <button class="btn btn-primary" id="saveServiceBtn">Сохранить</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal" id="productModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Редактирование товара</h3>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="productForm">
+                        <input type="hidden" id="productId">
+                        <div class="form-group">
+                            <label>Название товара *</label>
+                            <input type="text" id="productName" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Описание *</label>
+                            <textarea id="productDescription" class="form-textarea" rows="3" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Цена *</label>
+                            <input type="text" id="productPrice" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Категория *</label>
+                            <input type="text" id="productCategory" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label>URL картинки *</label>
+                            <div class="image-url-input">
+                                <input type="text" id="productImage" class="form-input" required>
+                                <button type="button" class="btn btn-small" id="browseImagesBtn">
+                                    <i class="fas fa-image"></i> Выбрать
+                                </button>
+                            </div>
+                            <div class="image-preview" id="productImagePreview"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Локация</label>
+                            <input type="text" id="productLocation" class="form-input" value="В наличии">
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Материал</label>
+                                <input type="text" id="productMaterial" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label>Возраст</label>
+                                <input type="text" id="productAge" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label>Гарантия</label>
+                                <input type="text" id="productWarranty" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label>Размеры</label>
+                                <input type="text" id="productSize" class="form-input">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary modal-close">Отмена</button>
+                    <button class="btn btn-danger" id="deleteProductBtn" style="display: none;">Удалить</button>
+                    <button class="btn btn-primary" id="saveProductBtn">Сохранить</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal" id="imageBrowserModal">
+            <div class="modal-content large">
+                <div class="modal-header">
+                    <h3>Выбор картинки</h3>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="image-browser" id="imageBrowser">
+                        <!-- Картинки загружаются динамически -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary modal-close">Отмена</button>
+                    <button class="btn btn-primary" id="selectImageBtn">Выбрать</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification System -->
+    <div id="notificationContainer"></div>
+
+    <!-- Scripts -->
+    <script src="admin.js" defer></script>
+</body>
+</html>
