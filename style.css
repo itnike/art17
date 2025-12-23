@@ -1107,3 +1107,27 @@ img {
 .product-card:nth-child(4) { animation-delay: 0.3s; }
 .product-card:nth-child(5) { animation-delay: 0.4s; }
 .product-card:nth-child(6) { animation-delay: 0.5s; }
+
+/* Стили для ссылки на админку */
+.admin-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #ff9900 !important; /* Оранжевый цвет для заметности */
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    padding: 5px 10px;
+    border-radius: 4px;
+    background: rgba(255, 153, 0, 0.1);
+}
+
+.admin-link:hover {
+    color: #ff6600 !important;
+    background: rgba(255, 153, 0, 0.2);
+    transform: translateX(5px);
+}
+
+.admin-link i {
+    font-size: 14px;
+}
