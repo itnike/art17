@@ -1257,7 +1257,7 @@ Email: ${app.email}
             ui.openModal('serviceModal');
         }
         
-        // Добавление первого товара
+        // Добавление первого товар
         if (e.target.closest('#addFirstProduct')) {
             ui.fillProductForm();
             ui.openModal('productModal');
