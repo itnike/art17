@@ -612,4 +612,25 @@ class AdminApp {
 // ===== ЗАПУСК =====
 document.addEventListener('DOMContentLoaded', () => {
     window.adminApp = new AdminApp();
+// ===== ГЛОБАЛЬНЫЕ ФУНКЦИИ =====
+window.switchSection = function(sectionId) {
+    if (window.adminApp && window.adminApp.events) {
+        window.adminApp.events.switchSection(sectionId);
+    }
+    return false;
+};
+
+window.toggleSidebar = function() {
+    document.querySelector('.sidebar').classList.toggle('active');
+};
+
+window.openModal = function(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) modal.classList.add('active');
+};
+
+window.closeModal = function(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) modal.classList.remove('active');
+};
 });
